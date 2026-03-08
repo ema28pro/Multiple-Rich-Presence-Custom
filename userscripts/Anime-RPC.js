@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Anime-RPC
-// @version      3.0
+// @version      3.1
 // @author       Ema (Claud Modified)
 // @description  Discord RPC for anime streaming sites
 //
@@ -157,6 +157,8 @@
     navObserver.observe(document.body, { childList: true, subtree: true });
 
     setInterval(() => {
+        if (document.hidden) return; // pestaña en segundo plano → no enviar
+
         const info = site.parse();
 
         const payload = {

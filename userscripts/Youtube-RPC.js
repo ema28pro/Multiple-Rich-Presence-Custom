@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         YouTube-RPC
-// @version      2.2
+// @version      2.3
 // @author       Custom
 // @description  Discord RPC for YouTube — works with the Node.js bridge
 //
@@ -183,8 +183,9 @@ function buildRPC() {
 updateMenuLabel();
 connect();
 
-// Enviar RPC cada 3 segundos
+// Enviar RPC cada 3 segundos — solo si la pestaña está activa
 setInterval(() => {
+    if (document.hidden) return; // pestaña en segundo plano → no enviar
     if (!Socket || Socket.readyState === 3) connect();
     if (!Socket || Socket.readyState !== 1) return;
     var rpc = buildRPC();
