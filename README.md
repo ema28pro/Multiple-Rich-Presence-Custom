@@ -19,6 +19,18 @@ Muestra en tu perfil de Discord lo que estás haciendo — jugando TETR.IO, vien
 
 No necesitas usar todas las funciones. Instala solo los userscripts que quieras.
 
+## Instalación
+
+1. **[Descarga el ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (rama `release` — solo los archivos necesarios)
+2. Extrae el ZIP en una carpeta cualquiera
+3. Listo — ya puedes ejecutar `DiscordPipeSocket.jar`
+
+El ZIP contiene:
+- `DiscordPipeSocket.jar` — el bridge
+- `config.json` — configuración
+- `custom-status/` — panel de estado personalizado
+- `userscripts/` — scripts de Tampermonkey
+
 ## Requisitos
 
 - **Java 8+** instalado

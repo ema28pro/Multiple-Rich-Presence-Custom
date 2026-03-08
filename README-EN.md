@@ -19,6 +19,18 @@ Shows what you're doing on your Discord profile — playing TETR.IO, watching an
 
 You don't need to use all features. Just install the userscripts you want.
 
+## Installation
+
+1. **[Download the ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (`release` branch — only the necessary files)
+2. Extract the ZIP to any folder
+3. Done — you can now run `DiscordPipeSocket.jar`
+
+The ZIP contains:
+- `DiscordPipeSocket.jar` — the bridge
+- `config.json` — configuration
+- `custom-status/` — custom status panel
+- `userscripts/` — Tampermonkey scripts
+
 ## Requirements
 
 - **Java 8+** installed
