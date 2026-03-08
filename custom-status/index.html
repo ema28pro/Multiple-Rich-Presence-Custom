@@ -32,7 +32,6 @@
             justify-content: center;
         }
 
-        /* ---- Form Panel ---- */
         .form-panel {
             background: #16213e;
             border-radius: 12px;
@@ -215,7 +214,6 @@
             flex-wrap: wrap;
         }
 
-        /* ---- Preview Panel ---- */
         .preview-panel {
             min-width: 320px;
             max-width: 360px;
@@ -309,32 +307,6 @@
             color: #72767d;
         }
 
-        .dc-buttons-area {
-            padding: 0 14px 14px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .dc-button {
-            display: block;
-            text-align: center;
-            padding: 7px 12px;
-            border-radius: 4px;
-            background: #4f545c;
-            color: #ffffff;
-            font-size: 12px;
-            font-weight: 500;
-            text-decoration: none;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .dc-button:hover {
-            background: #5d6269;
-        }
-
         .dc-empty {
             color: #555;
             font-style: italic;
@@ -347,7 +319,6 @@
             display: none !important;
         }
 
-        /* Tooltip for images */
         .img-tooltip {
             position: relative;
         }
@@ -373,7 +344,6 @@
 
 <body>
     <div class="container">
-        <!-- Form -->
         <div class="form-panel">
             <h1>Custom Discord Status</h1>
             <p class="subtitle">Configure your custom Rich Presence and send it to the bridge</p>
@@ -385,7 +355,6 @@
 
             <hr class="separator">
 
-            <!-- Details & State -->
             <div class="form-group">
                 <label>Details (Line 1)</label>
                 <input type="text" id="rpcDetails" placeholder="Playing something cool..." maxlength="128">
@@ -397,7 +366,6 @@
 
             <hr class="separator">
 
-            <!-- Images -->
             <div class="section-title">Images</div>
             <div class="form-group">
                 <label>Large Image URL</label>
@@ -420,7 +388,6 @@
 
             <hr class="separator">
 
-            <!-- Timer -->
             <div class="checkbox-group">
                 <input type="checkbox" id="rpcTimer">
                 <label for="rpcTimer">Show elapsed time</label>
@@ -432,7 +399,6 @@
 
             <hr class="separator">
 
-            <!-- Actions -->
             <div class="actions">
                 <button id="btnActivate" class="btn btn-primary">Activate</button>
                 <button id="btnDeactivate" class="btn btn-danger hidden">Deactivate</button>
@@ -440,7 +406,6 @@
             </div>
         </div>
 
-        <!-- Preview -->
         <div class="preview-panel">
             <h2>Preview</h2>
             <div class="discord-card">
@@ -453,7 +418,6 @@
     </div>
 
     <script>
-        // ---- Elements ----
         const els = {
             details: document.getElementById("rpcDetails"),
             state: document.getElementById("rpcState"),
@@ -479,9 +443,13 @@
         // ---- Timer checkbox toggle ----
         els.timer.addEventListener("change", () => {
             els.timerInputGroup.style.display = els.timer.checked ? "" : "none";
+            // If unchecked, clear startTime immediately
+            if (!els.timer.checked) {
+                startTime = null;
+            }
+            if (active) sendRPC();
         });
 
-        // Parse HH:MM:SS to milliseconds
         function parseTimeInput(val) {
             const parts = val.trim().split(":").map(Number);
             if (parts.some(isNaN)) return 0;
@@ -491,7 +459,6 @@
             return 0;
         }
 
-        // Format ms to HH:MM:SS
         function msToTimeInput(ms) {
             const totalSec = Math.floor(ms / 1000);
             const h = Math.floor(totalSec / 3600);
@@ -507,7 +474,6 @@
             socket.onopen = () => {
                 els.connStatus.className = "connection-status connected";
                 els.connText.textContent = "Connected to bridge";
-                // Query bridge for current custom source state
                 try {
                     socket.send(JSON.stringify({ action: "query", source: "custom" }));
                 } catch (e) { }
@@ -518,7 +484,6 @@
                     const data = JSON.parse(event.data);
                     if (data.type === "queryResponse" && data.source === "custom") {
                         if (data.active && data.persistent) {
-                            // Persistent source (saved by bridge or set by this page) → restore
                             active = true;
                             if (data.rpc) {
                                 if (data.rpc.details) els.details.value = data.rpc.details;
@@ -529,21 +494,27 @@
                                 if (data.rpc.smallImageText) els.smallText.value = data.rpc.smallImageText;
                                 if (data.rpc.startTimestamp) {
                                     startTime = typeof data.rpc.startTimestamp === "number"
-                                        ? (data.rpc.startTimestamp < 1e12 ? data.rpc.startTimestamp * 1000 : data.rpc.startTimestamp)
+                                        ? (data.rpc.startTimestamp < 1e12
+                                            ? data.rpc.startTimestamp * 1000
+                                            : data.rpc.startTimestamp)
                                         : Date.now();
                                     els.timer.checked = true;
                                     els.timerInputGroup.style.display = "";
                                     els.timerValue.value = msToTimeInput(Date.now() - startTime);
+                                } else {
+                                    // The bridge has no timestamp → ensure timer is off
+                                    startTime = null;
+                                    els.timer.checked = false;
+                                    els.timerInputGroup.style.display = "none";
                                 }
                             }
                             els.activate.classList.add("hidden");
                             els.deactivate.classList.remove("hidden");
                             updatePreview();
                         } else {
-                            // Not active or non-persistent (phantom source) → clean up
                             active = false;
+                            startTime = null;
                             if (data.active && !data.persistent) {
-                                // Remove phantom non-persistent custom source
                                 try {
                                     socket.send(JSON.stringify({ source: "custom", action: "remove" }));
                                 } catch (ex) { }
@@ -586,6 +557,9 @@
             if (smallImg) rpc.smallImageKey = smallImg;
             if (smallText) rpc.smallImageText = smallText;
 
+            // ── FIX: always set startTimestamp explicitly ──────────
+            // // If checkbox is NOT checked → null (bridge removes it)
+            // // If checked → calculate from input
             if (els.timer.checked) {
                 if (!startTime) {
                     const customMs = parseTimeInput(els.timerValue.value);
@@ -593,6 +567,7 @@
                 }
                 rpc.startTimestamp = startTime;
             } else {
+                rpc.startTimestamp = null; // explícito: quitar timestamp del bridge
                 startTime = null;
             }
 
@@ -617,15 +592,17 @@
         // ---- Activate / Deactivate ----
         els.activate.addEventListener("click", () => {
             active = true;
+            // Calculate startTime only if the timer is checked
             if (els.timer.checked) {
                 const customMs = parseTimeInput(els.timerValue.value);
                 startTime = Date.now() - customMs;
+            } else {
+                startTime = null;
             }
             els.activate.classList.add("hidden");
             els.deactivate.classList.remove("hidden");
             sendRPC();
             updatePreview();
-            // Auto-save active state
             localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
         });
 
@@ -636,7 +613,6 @@
             els.activate.classList.remove("hidden");
             removeRPC();
             updatePreview();
-            // Auto-save inactive state
             localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
         });
 
@@ -666,6 +642,8 @@
             els.timer.checked = !!cfg.timer;
             els.timerValue.value = cfg.timerValue || "00:00:00";
             els.timerInputGroup.style.display = cfg.timer ? "" : "none";
+            // Clear startTime on load — it will be recalculated on activate
+            startTime = null;
         }
 
         els.save.addEventListener("click", () => {
@@ -674,7 +652,6 @@
             setTimeout(() => { els.save.textContent = "Save Config"; }, 1500);
         });
 
-        // Load on start
         try {
             const saved = localStorage.getItem("customRpcConfig");
             if (saved) loadConfig(JSON.parse(saved));
@@ -697,7 +674,6 @@
 
             let html = '<div class="discord-card-body">';
 
-            // Images
             if (largeImg) {
                 html += '<div class="dc-images">';
                 html += `<img class="dc-large-img img-tooltip" src="${escapeHtml(largeImg)}" data-tooltip="${escapeHtml(largeText)}" onerror="this.style.display='none'" alt="">`;
@@ -707,13 +683,12 @@
                 html += '</div>';
             }
 
-            // Info
             html += '<div class="dc-info">';
             html += `<div class="dc-app-name">Custom Status</div>`;
             html += `<div class="dc-details">${escapeHtml(details)}</div>`;
             if (state) html += `<div class="dc-state">${escapeHtml(state)}</div>`;
-            if (showTimer) {
-                const elapsed = startTime ? formatElapsed(Date.now() - startTime) : "00:00 elapsed";
+            if (showTimer && startTime) {
+                const elapsed = formatElapsed(Date.now() - startTime);
                 html += `<div class="dc-time">${elapsed} elapsed</div>`;
             }
             html += '</div></div>';
@@ -736,14 +711,12 @@
             return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
         }
 
-        // Update preview on any input change
         const allInputs = document.querySelectorAll("input");
         allInputs.forEach(inp => {
-            inp.addEventListener("input", () => { if (active) updatePreview(); });
-            inp.addEventListener("change", () => { if (active) updatePreview(); });
+            inp.addEventListener("input", () => { if (active) { sendRPC(); updatePreview(); } });
+            inp.addEventListener("change", () => { if (active) { sendRPC(); updatePreview(); } });
         });
 
-        // Update timer in preview every second
         setInterval(() => { if (active) updatePreview(); }, 1000);
     </script>
 </body>
