@@ -25,6 +25,7 @@
 ## 5. Roblox
 - El bridge detecta Roblox automáticamente
 - Desactiva la detección de Roblox en Discord para que funcione
+- Para desactivar el monitoreo de Roblo, clic derecho en el icono de la bandeja y Roblox Monitor : OFF
 
 ## 6. Problemas Comunes
 - Asegúrate de que el JAR está corriendo y Discord abierto
