@@ -1,14 +1,4 @@
 {
   "robloxMonitorEnabled": false,
-  "custom": {
-    "rpc": {
-      "smallImageKey": "https://cdn.dribbble.com/userupload/13956443/file/original-0272f89e42a9ab9856dbb35bcbbf6949.gif",
-      "largeImageText": "https://cdn.dribbble.com/userupload/13956443/file/original-0272f89e42a9ab9856dbb35bcbbf6949.gif",
-      "largeImageKey": "https://cdn.dribbble.com/userupload/13956443/file/original-0272f89e42a9ab9856dbb35bcbbf6949.gif",
-      "details": "Amongus",
-      "startTimestamp": 1772743650652
-    },
-    "active": true,
-    "priority": 4
-  }
+  "custom": {"active": false}
 }
