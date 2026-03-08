@@ -157,7 +157,10 @@ public class SourceManager {
     }
 
     private static void copyTimestamp(JSONObject src, JSONObject dst, String key) {
-        if (!src.has(key) || src.isNull(key)) return;
+        if (!src.has(key) || src.isNull(key)) {
+            dst.put(key, 0); // explícito: Discord interpreta 0 como "sin timer"
+            return;
+        }
         try {
             Object val = src.get(key);
             long ms;
@@ -168,9 +171,11 @@ public class SourceManager {
             }
             if (ms > 0) {
                 dst.put(key, ms / 1000);
+            } else {
+                dst.put(key, 0);
             }
         } catch (Exception ignored) {
-            // skip invalid timestamp
+            dst.put(key, 0);
         }
     }
 }
