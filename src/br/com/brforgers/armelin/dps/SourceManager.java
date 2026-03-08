@@ -72,6 +72,7 @@ public class SourceManager {
     }
 
     public SourceEntry getActiveSource() {
+        // Select the most relevant source based on priority and recency, ignoring expired non-persistent sources
         long now = System.currentTimeMillis();
         SourceEntry best = null;
         for (SourceEntry entry : sources.values()) {
@@ -88,26 +89,33 @@ public class SourceManager {
     }
 
     private UpdateResult evaluate() {
+        // Get the current active source (the best one to use)
         SourceEntry active = getActiveSource();
 
         if (active == null) {
+            // If there was a previous active source, clear its info and signal a change
             if (lastActiveKey != null) {
                 lastActiveKey = null;
                 lastRpcHash = 0;
                 return new UpdateResult(true, null, null);
             }
+            // If there was never an active source, signal no change
             return new UpdateResult(false, null, null);
         }
 
+        // Calculate a hash for the current presence data
         int currentHash = active.rpcData.toString().hashCode();
+        // If the active source and its data are the same as before, signal no change
         if (active.source.equals(lastActiveKey) && currentHash == lastRpcHash) {
             return new UpdateResult(false, null, active.source);
         }
 
+        // Update the internal info with the new active source and its data
         lastActiveKey = active.source;
         lastRpcHash = currentHash;
+        // Signal that there was a change, and return the new presence and source name
         return new UpdateResult(true, buildPresence(active.rpcData), active.source);
-    }
+}
 
     private DiscordRichPresence buildPresence(JSONObject rpc) {
         JSONObject truncated = new JSONObject();
@@ -141,6 +149,9 @@ public class SourceManager {
     }
 
     private static void copyTruncated(JSONObject src, JSONObject dst, String key, int maxLen) {
+        // This method copies a string field from src to dst, truncating it to maxLen characters if necessary.
+        // src = source JSON object
+        // dst = destination JSON object
         if (src.has(key) && !src.isNull(key)) {
             String val = src.getString(key);
             if (val.length() > maxLen) {
@@ -151,14 +162,16 @@ public class SourceManager {
     }
 
     private static void copyIfPresent(JSONObject src, JSONObject dst, String key) {
+        // This method copies a field from src to dst if it exists and is not null, without any modification.
         if (src.has(key) && !src.isNull(key)) {
             dst.put(key, src.get(key));
         }
     }
 
     private static void copyTimestamp(JSONObject src, JSONObject dst, String key) {
+        // This method copies a timestamp field from src to dst, converting it from milliseconds to seconds.
         if (!src.has(key) || src.isNull(key)) {
-            dst.put(key, 0); // explícito: Discord interpreta 0 como "sin timer"
+            dst.put(key, 0); // Discord treats 0 as "no timestamp", so if the field is missing or null, we set it to 0
             return;
         }
         try {
@@ -175,7 +188,7 @@ public class SourceManager {
                 dst.put(key, 0);
             }
         } catch (Exception ignored) {
-            dst.put(key, 0);
+            dst.put(key, 0); // If there's any error parsing the timestamp, we set it to 0 to avoid sending invalid data to Discord
         }
     }
 }
