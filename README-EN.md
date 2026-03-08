@@ -23,7 +23,7 @@ You don't need to use all features. Just install the userscripts you want.
 
 - **Java 8+** installed
 - **Discord** open (desktop app)
-- **Tampermonkey** in your browser ([Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) / [Firefox](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/)) — only if using userscripts
+- **Tampermonkey** in your browser ([Chrome](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo) / [Firefox](https://addons.mozilla.org/en-US/firefox/addon/tampermonkey/) / [Edge](https://microsoftedge.microsoft.com/addons/detail/tampermonkey/iikmkjmpaadaobahmlepeloendndfphd)) — only if using userscripts
 
 ## Usage
 
