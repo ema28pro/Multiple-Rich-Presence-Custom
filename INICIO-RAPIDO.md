@@ -5,7 +5,7 @@
 ## 1. Requisitos
 - **Java 8+** instalado
 - **Discord** abierto
-- (Opcional) **Tampermonkey** en tu navegador para userscripts
+- **Tampermonkey** en tu navegador para los userscripts
 
 ## 2. Instalación
 1. Descarga el ZIP desde la [rama release](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)
