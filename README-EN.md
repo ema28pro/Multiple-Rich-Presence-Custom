@@ -10,14 +10,27 @@ Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PA
 
 Shows what you're doing on your Discord profile — playing TETR.IO, watching anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
 
-| Actividad       | Preview                            |
+| Activity        | Preview                            |
 | --------------- | ---------------------------------- |
 | TETR.IO         | ![TETR.IO](img/Tetr.io.png)        |
 | Anime           | ![Anime](img/Anime.png)            |
+| YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
 | Custom Status   | ![Custom](img/Custom.png)          |
 
 You don't need to use all features. Just install the userscripts you want.
+
+## Installation
+
+1. **[Download the ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (`release` branch — only the necessary files)
+2. Extract the ZIP to any folder
+3. Done — you can now run `DiscordPipeSocket.jar`
+
+The ZIP contains:
+- `DiscordPipeSocket.jar` — the bridge
+- `config.json` — configuration
+- `custom-status/` — custom status panel
+- `userscripts/` — Tampermonkey scripts
 
 ## Requirements
 
@@ -39,12 +52,14 @@ With Tampermonkey installed:
 
 - **TETR.IO** → Install `userscripts/TETRIO-RPC.js`
 - **Anime** → Install `userscripts/Anime-RPC.js`
+- **YouTube** → Install `userscripts/YouTube-RPC.js`
 
 To install: open Tampermonkey → New script → paste the file contents → Save.
 
 Only install the ones you need. If you only care about TETRIO, skip the anime one and vice versa.
 
-> **Note:** The TETR.IO userscript currently doesn't detect **Tetra League** correctly. A fix is pending.
+> **Note:** **YouTube-RPC:** Works on any video, playlist or channel. If you use AnimeFLV, the adblocker may block the script.  
+> If you switch between pages with different userscripts, errors may occur. If the RPC doesn't update, reload the page.
 
 ### 3. Roblox (automatic)
 
@@ -90,6 +105,8 @@ If you're using Firefox, go to `about:config` and set `network.websocket.allowIn
 - **RPC not showing**: Make sure `DiscordPipeSocket.jar` is running and Discord is open.
 - **Roblox not detected**: The bridge needs Roblox to finish loading the game. Wait a few seconds.
 - **Custom status activates by itself**: Close any old custom status panel tabs in your browser.
+- **YouTube-RPC doesn't work on AnimeFLV**: Disable the adblocker so the script can connect.
+- **Errors when switching between userscripts**: If the status doesn't update, reload the page.
 
 ## Credits
 
