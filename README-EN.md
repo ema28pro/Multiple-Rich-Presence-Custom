@@ -12,7 +12,7 @@
   <img alt="Status Paused" src="https://img.shields.io/badge/Status-Paused-white" class="inline-block mx-1" style="margin: 0px 2px;">
 </div>
 
-Discord Rich Presence for multiple activities: TETR.IO, anime, Roblox, and custom statuses.
+Discord Rich Presence for multiple activities: Tetr.io, YouTube, Anime, Roblox, and custom statuses.
 
 Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PATXS.
 
@@ -20,11 +20,11 @@ Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PA
 
 ## What it does
 
-Shows what you're doing on your Discord profile — playing TETR.IO, watching anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
+Shows what you're doing on your Discord profile — playing Tetr.io, watching YouTube, watching Anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
 
 | Activity        | Preview                            |
 | --------------- | ---------------------------------- |
-| TETR.IO         | ![TETR.IO](img/Tetr.io.png)        |
+| Tetr.io        | ![Tetr.io](img/Tetr.io.png)        |
 | Anime           | ![Anime](img/Anime.png)            |
 | YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
