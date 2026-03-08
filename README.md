@@ -50,6 +50,8 @@ Solo instala los que necesites. Si solo te interesa TETRIO, ignora el de anime y
 
 El bridge detecta automáticamente cuando estás jugando Roblox desde los logs del juego. No necesitas instalar nada extra.
 
+> **Importante:** Para que se muestre el estado de Rivals, debes **desactivar la detección de Roblox propia de Discord** en Ajustes → Actividades registradas → desactiva Roblox. Si no, Discord muestra su propia actividad y no la del bridge.
+
 Por ahora solo detecta y muestra **Rivals**, pero en el futuro se podrá detectar cualquier juego de Roblox.
 
 ### 4. Custom Status (opcional)
