@@ -1,5 +1,17 @@
 # Discord RPC Multi-Activity Bridge
 
+<div align="center">
+  <br>
+  <img alt="Java" src="https://img.shields.io/badge/Java-ED8B00?logo=openjdk&logoColor=black" class="inline-block mx-1" style="margin: 0px 2px;">
+  <img alt="JavaScript" src="https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black" class="inline-block mx-1" style="margin: 0px 2px;">
+  <img alt="Tampermonkey" src="https://img.shields.io/badge/Tampermonkey-black?logo=Tampermonkey" class="inline-block mx-1" style="margin: 0px 2px;">
+  <img alt="Visitors" src="https://visitor-badge.laobi.icu/badge?page_id=ema28pro/Multiple-Rich-Presence-Custom" class="inline-block mx-1" style="margin: 0px 2px;">
+  <img alt="Github Stars" src="https://img.shields.io/github/stars/ema28pro/Multiple-Rich-Presence-Custom" class="inline-block mx-1" style="margin: 0px 2px;">
+
+
+  <img alt="Status Paused" src="https://img.shields.io/badge/Status-Paused-white" class="inline-block mx-1" style="margin: 0px 2px;">
+</div>
+
 Discord Rich Presence for multiple activities: TETR.IO, anime, Roblox, and custom statuses.
 
 Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PATXS.
