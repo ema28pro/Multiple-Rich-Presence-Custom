@@ -1,32 +1,55 @@
 @echo off
-REM Script para actualizar la rama release con archivos principales desde main
 
-REM Cambiar a main y actualizar
-call git checkout main
-call git pull
+echo [1] Cambiando a main...
+git checkout main
 
-REM Cambiar a release y resetear
-call git checkout release
-call git reset --hard
+echo [2] Pulling main...
+git pull
 
-REM Traer archivos principales desde main
-call git checkout main -- README.md README-EN.md bridge-state.json DiscordPipeSocket.jar config.json custom-status/ userscripts/ img/
+echo [3] Cambiando a release...
+git checkout release
 
-REM Hacer commit solo si hay cambios
+echo [4] Reset hard...
+git reset --hard
+
+echo [5] Copiando README.md...
+git checkout main -- README.md
+
+echo [6] Copiando README-EN.md...
+git checkout main -- README-EN.md
+
+echo [7] Copiando bridge-state.json...
+git checkout main -- bridge-state.json
+
+echo [8] Copiando DiscordPipeSocket.jar...
+git checkout main -- DiscordPipeSocket.jar
+
+echo [9] Copiando config.json...
+git checkout main -- config.json
+
+echo [10] Copiando custom-status/...
+git checkout main -- custom-status/
+
+echo [11] Copiando userscripts/...
+git checkout main -- userscripts/
+
+echo [12] Copiando img/...
+git checkout main -- img/
+
+echo [13] Chequeando diff...
 git diff --cached --quiet
 if %errorlevel% neq 0 (
-    call git commit -m "Actualizados archivos principales desde main"
+    git commit -m "Actualizados archivos principales desde main"
     echo Cambios commiteados.
+) else (
+    echo Sin cambios nuevos.
 )
 
-REM Pushear forzado con seguridad
-call git push --force-with-lease origin release
-if %errorlevel% neq 0 (
-    echo Error: el push falló. Verifica el estado de la rama remota.
-)
+echo [14] Pusheando...
+git push --force-with-lease origin release
 
-REM Volver a main
-call git checkout main
+echo [15] Volviendo a main...
+git checkout main
 
 echo Proceso completado.
 pause
