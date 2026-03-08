@@ -16,7 +16,7 @@
 </div>
 
 
-Discord Rich Presence para múltiples actividades: TETR.IO, anime, Roblox y estados personalizados.
+Discord Rich Presence para múltiples actividades: Tetr.io, YouTube, Anime, Roblox y estados personalizados.
 
 Basado en [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) de PATXS.
 
@@ -24,7 +24,7 @@ Basado en [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) de P
 
 ## Qué hace
 
-Muestra en tu perfil de Discord lo que estás haciendo — jugando TETR.IO, viendo anime, jugando Roblox, o un estado personalizado. Solo se muestra una actividad a la vez (la de mayor prioridad).
+Muestra en tu perfil de Discord lo que estás haciendo — jugando Tetr.io, viendo youtube, viendo anime, jugando Roblox, o un estado personalizado. Solo se muestra una actividad a la vez (la de mayor prioridad).
 
 | Actividad       | Preview                            |
 | --------------- | ---------------------------------- |
