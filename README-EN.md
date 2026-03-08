@@ -58,8 +58,8 @@ To install: open Tampermonkey → New script → paste the file contents → Sav
 
 Only install the ones you need. If you only care about TETRIO, skip the anime one and vice versa.
 
-> **Note:** **YouTube-RPC:** Works on any video, playlist or channel. If you use AnimeFLV, the adblocker may block the script.  
-> If you switch between pages with different userscripts, errors may occur. If the RPC doesn't update, reload the page.
+> **Note:** Some ad blockers may block scripts.
+> If you see that the RPC isn't updating, reload the page.
 
 ### 3. Roblox (automatic)
 
@@ -105,7 +105,7 @@ If you're using Firefox, go to `about:config` and set `network.websocket.allowIn
 - **RPC not showing**: Make sure `DiscordPipeSocket.jar` is running and Discord is open.
 - **Roblox not detected**: The bridge needs Roblox to finish loading the game. Wait a few seconds.
 - **Custom status activates by itself**: Close any old custom status panel tabs in your browser.
-- **YouTube-RPC doesn't work on AnimeFLV**: Disable the adblocker so the script can connect.
+- **Anime-RPC doesn't work on AnimeFLV**: Disable the adblocker so the script can connect.
 - **Errors when switching between userscripts**: If the status doesn't update, reload the page.
 
 ## Credits
