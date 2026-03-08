@@ -8,12 +8,16 @@ import org.json.JSONObject;
 public class Config {
     public final String clientId;
     public final String tetrioClientId;
+    public final String robloxClientId;
+    public final String youtubeClientId;
     public final int wsPort;
     public final long sourceTimeout;
 
-    private Config(String clientId, String tetrioClientId, int wsPort, long sourceTimeout) {
+    private Config(String clientId, String tetrioClientId, String robloxClientId, String youtubeClientId, int wsPort, long sourceTimeout) {
         this.clientId = clientId;
         this.tetrioClientId = tetrioClientId;
+        this.robloxClientId = robloxClientId;
+        this.youtubeClientId = youtubeClientId;
         this.wsPort = wsPort;
         this.sourceTimeout = sourceTimeout;
     }
@@ -21,6 +25,8 @@ public class Config {
     public static Config load() {
         String defaultClientId = "";
         String defaultTetrioClientId = "";
+        String defaultRobloxClientId = "";
+        String defaultYoutubeClientId = "";
         int defaultPort = 6680;
         long defaultTimeout = 15000;
 
@@ -32,7 +38,7 @@ public class Config {
 
             if (!configFile.exists()) {
                 System.out.println("[Config] config.json not found next to JAR, using defaults.");
-                return new Config(defaultClientId, defaultTetrioClientId, defaultPort, defaultTimeout);
+                return new Config(defaultClientId, defaultTetrioClientId, defaultRobloxClientId, defaultYoutubeClientId, defaultPort, defaultTimeout);
             }
 
             FileInputStream fis = new FileInputStream(configFile);
@@ -44,6 +50,8 @@ public class Config {
 
             String clientId = json.optString("clientId", defaultClientId);
             String tetrioClientId = json.optString("tetrioClientId", defaultTetrioClientId);
+            String robloxClientId = json.optString("robloxClientId", defaultRobloxClientId);
+            String youtubeClientId = json.optString("youtubeClientId", defaultYoutubeClientId);
             int wsPort = json.optInt("wsPort", defaultPort);
             long sourceTimeout = json.optLong("sourceTimeout", defaultTimeout);
 
@@ -51,12 +59,16 @@ public class Config {
                 (clientId.isEmpty() ? "(not set)" : clientId.substring(0, Math.min(6, clientId.length())) + "...") +
                 ", tetrioClientId: " +
                 (tetrioClientId.isEmpty() ? "(not set)" : tetrioClientId.substring(0, Math.min(6, tetrioClientId.length())) + "...") +
+                ", robloxClientId: " +
+                (robloxClientId.isEmpty() ? "(not set)" : robloxClientId.substring(0, Math.min(6, robloxClientId.length())) + "...") +
+                ", youtubeClientId: " +
+                (youtubeClientId.isEmpty() ? "(not set)" : youtubeClientId.substring(0, Math.min(6, youtubeClientId.length())) + "...") +
                 ", port: " + wsPort + ", timeout: " + sourceTimeout + "ms");
 
-            return new Config(clientId, tetrioClientId, wsPort, sourceTimeout);
+            return new Config(clientId, tetrioClientId, robloxClientId, youtubeClientId, wsPort, sourceTimeout);
         } catch (Exception e) {
             System.err.println("[Config] Error loading config.json: " + e.getMessage());
-            return new Config(defaultClientId, defaultTetrioClientId, defaultPort, defaultTimeout);
+            return new Config(defaultClientId, defaultTetrioClientId, defaultRobloxClientId, defaultYoutubeClientId, defaultPort, defaultTimeout);
         }
     }
 }
