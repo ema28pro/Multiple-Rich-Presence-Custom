@@ -10,9 +10,12 @@ Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PA
 
 Shows what you're doing on your Discord profile — playing TETR.IO, watching anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
 
-| TETR.IO                     | Anime                   | Roblox (Rivals)                    | Custom Status             |
-| --------------------------- | ----------------------- | ---------------------------------- | ------------------------- |
-| ![TETR.IO](img/Tetr.io.png) | ![Anime](img/Anime.png) | ![Roblox](img/Roblox%20Rivals.png) | ![Custom](img/Custom.png) |
+| Actividad       | Preview                            |
+| --------------- | ---------------------------------- |
+| TETR.IO         | ![TETR.IO](img/Tetr.io.png)        |
+| Anime           | ![Anime](img/Anime.png)            |
+| Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
+| Custom Status   | ![Custom](img/Custom.png)          |
 
 You don't need to use all features. Just install the userscripts you want.
 
