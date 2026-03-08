@@ -28,7 +28,7 @@ Muestra en tu perfil de Discord lo que estás haciendo — jugando Tetr.io, vien
 
 | Actividad       | Preview                            |
 | --------------- | ---------------------------------- |
-| TETR.IO         | ![TETR.IO](img/Tetr.io.png)        |
+| Tetr.io         | ![Tetr.io](img/Tetr.io.png)        |
 | Anime           | ![Anime](img/Anime.png)            |
 | YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
