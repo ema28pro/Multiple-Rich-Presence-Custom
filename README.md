@@ -52,7 +52,7 @@ Con Tampermonkey instalado:
 
 - **TETR.IO** → Instala `userscripts/TETRIO-RPC.js`
 - **Anime** → Instala `userscripts/Anime-RPC.js`
-- **YouTube** → Instala `userscripts/YouTube-RPC.js` (la versión clásica no muestra miniaturas, pero la v2 sí las muestra y tiene un botón en la extensión para activar/desactivar el RPC)
+- **YouTube** → Instala `userscripts/YouTube-RPC.js`
 
 Para instalar: abre Tampermonkey → Nuevo script → pega el contenido del archivo → Guardar.
 
