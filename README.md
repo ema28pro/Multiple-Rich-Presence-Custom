@@ -14,10 +14,23 @@ Muestra en tu perfil de Discord lo que estás haciendo — jugando TETR.IO, vien
 | --------------- | ---------------------------------- |
 | TETR.IO         | ![TETR.IO](img/Tetr.io.png)        |
 | Anime           | ![Anime](img/Anime.png)            |
+| YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
 | Custom Status   | ![Custom](img/Custom.png)          |
 
 No necesitas usar todas las funciones. Instala solo los userscripts que quieras.
+
+## Instalación
+
+1. **[Descarga el ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (rama `release` — solo los archivos necesarios)
+2. Extrae el ZIP en una carpeta cualquiera
+3. Listo — ya puedes ejecutar `DiscordPipeSocket.jar`
+
+El ZIP contiene:
+- `DiscordPipeSocket.jar` — el bridge
+- `config.json` — configuración
+- `custom-status/` — panel de estado personalizado
+- `userscripts/` — scripts de Tampermonkey
 
 ## Requisitos
 
@@ -37,14 +50,17 @@ Tiene que estar corriendo mientras uses cualquiera de las funciones. Es silencio
 
 Con Tampermonkey instalado:
 
-- **TETR.IO** → Instala `userscripts/TETRIO-RPC.js` 
-- **Anime** → Instala `userscripts/Anime-RPC.js` 
+- **TETR.IO** → Instala `userscripts/TETRIO-RPC.js`
+- **Anime** → Instala `userscripts/Anime-RPC.js`
+- **YouTube** → Instala `userscripts/YouTube-RPC.js`
 
 Para instalar: abre Tampermonkey → Nuevo script → pega el contenido del archivo → Guardar.
 
 Solo instala los que necesites. Si solo te interesa TETRIO, ignora el de anime y viceversa.
 
-> **Nota:** El userscript de TETR.IO actualmente no detecta correctamente **Tetra League**. Está pendiente de corregir.
+> **Nota:** **YouTube-RPC:** Funciona en cualquier video, playlist o canal. La versión clásica no muestra miniaturas, pero la v2 sí las muestra y tiene un botón en la extensión para activar/desactivar el RPC.  
+> Si usas AnimeFLV, el adblocker puede bloquear el script.  
+> Si cambias entre páginas con diferentes userscripts, pueden ocurrir errores. Si ves que el RPC no actualiza, recarga la página.
 
 ### 3. Roblox (automático)
 
@@ -90,6 +106,8 @@ Si usas Firefox, ve a `about:config` y cambia `network.websocket.allowInsecureFr
 - **No aparece el RPC**: Asegúrate de que `DiscordPipeSocket.jar` está corriendo y Discord está abierto.
 - **Roblox no se detecta**: El bridge necesita que Roblox haya terminado de cargar el juego. Espera unos segundos.
 - **El custom status se activa solo**: Cierra las pestañas viejas del panel de custom status en tu navegador.
+- **YouTube-RPC no funciona en AnimeFLV**: Desactiva el adblocker para que el script pueda conectarse.
+- **Errores al cambiar entre userscripts**: Si el estado no se actualiza, recarga la página.
 
 ## Créditos
 
