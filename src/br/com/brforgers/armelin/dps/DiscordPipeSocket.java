@@ -384,6 +384,10 @@ public class DiscordPipeSocket {
         String requiredId = config.clientId;
         if ("tetrio".equals(source) && config.tetrioClientId != null && !config.tetrioClientId.isEmpty()) {
             requiredId = config.tetrioClientId;
+        } else if (("roblox".equals(source) || "roblox-desktop".equals(source)) && config.robloxClientId != null && !config.robloxClientId.isEmpty()) {
+            requiredId = config.robloxClientId;
+        } else if ("youtube".equals(source) && config.youtubeClientId != null && !config.youtubeClientId.isEmpty()) {
+            requiredId = config.youtubeClientId;
         }
         if (requiredId.equals(currentClientId)) return;
         if (!currentClientId.isEmpty()) {
