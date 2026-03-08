@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Discord RPC — Custom Status</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 30px 20px;
+        }
+
+        .container {
+            display: flex;
+            gap: 40px;
+            max-width: 1000px;
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        /* ---- Form Panel ---- */
+        .form-panel {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 28px;
+            flex: 1;
+            min-width: 380px;
+            max-width: 480px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        .form-panel h1 {
+            font-size: 20px;
+            margin-bottom: 6px;
+            color: #7289da;
+        }
+
+        .form-panel .subtitle {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+
+        .connection-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .connection-status .dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .connection-status.connected {
+            background: rgba(67, 181, 129, 0.15);
+            color: #43b581;
+        }
+
+        .connection-status.connected .dot {
+            background: #43b581;
+        }
+
+        .connection-status.disconnected {
+            background: rgba(240, 71, 71, 0.15);
+            color: #f04747;
+        }
+
+        .connection-status.disconnected .dot {
+            background: #f04747;
+        }
+
+        .form-group {
+            margin-bottom: 14px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #8e9297;
+            margin-bottom: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="url"] {
+            width: 100%;
+            background: #0f3460;
+            border: 1px solid #2a4a7f;
+            border-radius: 6px;
+            padding: 9px 12px;
+            color: #e0e0e0;
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #7289da;
+        }
+
+        .form-group input::placeholder {
+            color: #555;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+
+        .checkbox-group input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #7289da;
+            cursor: pointer;
+        }
+
+        .checkbox-group label {
+            font-size: 13px;
+            color: #b9bbbe;
+            cursor: pointer;
+            text-transform: none;
+            font-weight: 400;
+        }
+
+        .separator {
+            border: none;
+            border-top: 1px solid #2a4a7f;
+            margin: 18px 0;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #7289da;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #7289da;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #677bc4;
+        }
+
+        .btn-danger {
+            background: #f04747;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #d83c3c;
+        }
+
+        .btn-secondary {
+            background: #4f545c;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5d6269;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* ---- Preview Panel ---- */
+        .preview-panel {
+            min-width: 320px;
+            max-width: 360px;
+        }
+
+        .preview-panel h2 {
+            font-size: 14px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #8e9297;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .discord-card {
+            background: #2f3136;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .discord-card-header {
+            background: #202225;
+            padding: 10px 14px;
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            color: #8e9297;
+            letter-spacing: 0.5px;
+        }
+
+        .discord-card-body {
+            padding: 14px;
+            display: flex;
+            gap: 14px;
+        }
+
+        .dc-images {
+            position: relative;
+            flex-shrink: 0;
+            width: 64px;
+            height: 64px;
+        }
+
+        .dc-large-img {
+            width: 64px;
+            height: 64px;
+            border-radius: 8px;
+            object-fit: cover;
+            background: #40444b;
+        }
+
+        .dc-small-img {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            object-fit: cover;
+            background: #40444b;
+            border: 3px solid #2f3136;
+            position: absolute;
+            bottom: -4px;
+            right: -4px;
+        }
+
+        .dc-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .dc-app-name {
+            font-size: 12px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dc-details,
+        .dc-state,
+        .dc-time {
+            font-size: 12px;
+            color: #b9bbbe;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dc-time {
+            color: #72767d;
+        }
+
+        .dc-buttons-area {
+            padding: 0 14px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .dc-button {
+            display: block;
+            text-align: center;
+            padding: 7px 12px;
+            border-radius: 4px;
+            background: #4f545c;
+            color: #ffffff;
+            font-size: 12px;
+            font-weight: 500;
+            text-decoration: none;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .dc-button:hover {
+            background: #5d6269;
+        }
+
+        .dc-empty {
+            color: #555;
+            font-style: italic;
+            font-size: 13px;
+            text-align: center;
+            padding: 30px 14px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Tooltip for images */
+        .img-tooltip {
+            position: relative;
+        }
+
+        .img-tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #18191c;
+            color: #dcddde;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Form -->
+        <div class="form-panel">
+            <h1>Custom Discord Status</h1>
+            <p class="subtitle">Configure your custom Rich Presence and send it to the bridge</p>
+
+            <div id="connStatus" class="connection-status disconnected">
+                <span class="dot"></span>
+                <span id="connText">Disconnected</span>
+            </div>
+
+            <hr class="separator">
+
+            <!-- Details & State -->
+            <div class="form-group">
+                <label>Details (Line 1)</label>
+                <input type="text" id="rpcDetails" placeholder="Playing something cool..." maxlength="128">
+            </div>
+            <div class="form-group">
+                <label>State (Line 2)</label>
+                <input type="text" id="rpcState" placeholder="Having fun" maxlength="128">
+            </div>
+
+            <hr class="separator">
+
+            <!-- Images -->
+            <div class="section-title">Images</div>
+            <div class="form-group">
+                <label>Large Image URL</label>
+                <input type="url" id="rpcLargeImg" placeholder="https://example.com/image.png">
+            </div>
+            <div class="form-group">
+                <label>Large Image Tooltip</label>
+                <input type="text" id="rpcLargeText" placeholder="My cool image" maxlength="128">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Small Image URL</label>
+                    <input type="url" id="rpcSmallImg" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Small Image Tooltip</label>
+                    <input type="text" id="rpcSmallText" placeholder="Icon" maxlength="128">
+                </div>
+            </div>
+
+            <hr class="separator">
+
+            <!-- Timer -->
+            <div class="checkbox-group">
+                <input type="checkbox" id="rpcTimer">
+                <label for="rpcTimer">Show elapsed time</label>
+            </div>
+            <div class="form-group" id="timerInputGroup" style="display:none">
+                <label>Start time (HH:MM:SS)</label>
+                <input type="text" id="rpcTimerValue" placeholder="00:00:00" maxlength="8">
+            </div>
+
+            <hr class="separator">
+
+            <!-- Actions -->
+            <div class="actions">
+                <button id="btnActivate" class="btn btn-primary">Activate</button>
+                <button id="btnDeactivate" class="btn btn-danger hidden">Deactivate</button>
+                <button id="btnSave" class="btn btn-secondary">Save Config</button>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-panel">
+            <h2>Preview</h2>
+            <div class="discord-card">
+                <div class="discord-card-header">Playing a Game</div>
+                <div id="previewContent">
+                    <div class="dc-empty">Configure your status and press Activate</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ---- Elements ----
+        const els = {
+            details: document.getElementById("rpcDetails"),
+            state: document.getElementById("rpcState"),
+            largeImg: document.getElementById("rpcLargeImg"),
+            largeText: document.getElementById("rpcLargeText"),
+            smallImg: document.getElementById("rpcSmallImg"),
+            smallText: document.getElementById("rpcSmallText"),
+            timer: document.getElementById("rpcTimer"),
+            timerValue: document.getElementById("rpcTimerValue"),
+            timerInputGroup: document.getElementById("timerInputGroup"),
+            activate: document.getElementById("btnActivate"),
+            deactivate: document.getElementById("btnDeactivate"),
+            save: document.getElementById("btnSave"),
+            connStatus: document.getElementById("connStatus"),
+            connText: document.getElementById("connText"),
+            preview: document.getElementById("previewContent"),
+        };
+
+        let active = false;
+        let startTime = null;
+        let socket = null;
+
+        // ---- Timer checkbox toggle ----
+        els.timer.addEventListener("change", () => {
+            els.timerInputGroup.style.display = els.timer.checked ? "" : "none";
+        });
+
+        // Parse HH:MM:SS to milliseconds
+        function parseTimeInput(val) {
+            const parts = val.trim().split(":").map(Number);
+            if (parts.some(isNaN)) return 0;
+            if (parts.length === 3) return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
+            if (parts.length === 2) return (parts[0] * 60 + parts[1]) * 1000;
+            if (parts.length === 1) return parts[0] * 1000;
+            return 0;
+        }
+
+        // Format ms to HH:MM:SS
+        function msToTimeInput(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
+
+        // ---- WebSocket ----
+        function connect() {
+            socket = new WebSocket("ws://127.0.0.1:6680");
+
+            socket.onopen = () => {
+                els.connStatus.className = "connection-status connected";
+                els.connText.textContent = "Connected to bridge";
+                // Query bridge for current custom source state
+                try {
+                    socket.send(JSON.stringify({ action: "query", source: "custom" }));
+                } catch (e) { }
+            };
+
+            socket.onmessage = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === "queryResponse" && data.source === "custom") {
+                        if (data.active && data.persistent) {
+                            // Persistent source (saved by bridge or set by this page) → restore
+                            active = true;
+                            if (data.rpc) {
+                                if (data.rpc.details) els.details.value = data.rpc.details;
+                                if (data.rpc.state) els.state.value = data.rpc.state;
+                                if (data.rpc.largeImageKey) els.largeImg.value = data.rpc.largeImageKey;
+                                if (data.rpc.largeImageText) els.largeText.value = data.rpc.largeImageText;
+                                if (data.rpc.smallImageKey) els.smallImg.value = data.rpc.smallImageKey;
+                                if (data.rpc.smallImageText) els.smallText.value = data.rpc.smallImageText;
+                                if (data.rpc.startTimestamp) {
+                                    startTime = typeof data.rpc.startTimestamp === "number"
+                                        ? (data.rpc.startTimestamp < 1e12 ? data.rpc.startTimestamp * 1000 : data.rpc.startTimestamp)
+                                        : Date.now();
+                                    els.timer.checked = true;
+                                    els.timerInputGroup.style.display = "";
+                                    els.timerValue.value = msToTimeInput(Date.now() - startTime);
+                                }
+                            }
+                            els.activate.classList.add("hidden");
+                            els.deactivate.classList.remove("hidden");
+                            updatePreview();
+                        } else {
+                            // Not active or non-persistent (phantom source) → clean up
+                            active = false;
+                            if (data.active && !data.persistent) {
+                                // Remove phantom non-persistent custom source
+                                try {
+                                    socket.send(JSON.stringify({ source: "custom", action: "remove" }));
+                                } catch (ex) { }
+                            }
+                            els.deactivate.classList.add("hidden");
+                            els.activate.classList.remove("hidden");
+                            updatePreview();
+                        }
+                    }
+                } catch (e) { }
+            };
+
+            socket.onclose = () => {
+                els.connStatus.className = "connection-status disconnected";
+                els.connText.textContent = "Disconnected — retrying...";
+                setTimeout(connect, 5000);
+            };
+
+            socket.onerror = () => { };
+        }
+
+        connect();
+
+        // ---- Build RPC payload ----
+        function buildPayload() {
+            const rpc = {};
+
+            const details = els.details.value.trim();
+            const state = els.state.value.trim();
+            if (details) rpc.details = details;
+            if (state) rpc.state = state;
+
+            const largeImg = els.largeImg.value.trim();
+            const largeText = els.largeText.value.trim();
+            if (largeImg) rpc.largeImageKey = largeImg;
+            if (largeText) rpc.largeImageText = largeText;
+
+            const smallImg = els.smallImg.value.trim();
+            const smallText = els.smallText.value.trim();
+            if (smallImg) rpc.smallImageKey = smallImg;
+            if (smallText) rpc.smallImageText = smallText;
+
+            if (els.timer.checked) {
+                if (!startTime) {
+                    const customMs = parseTimeInput(els.timerValue.value);
+                    startTime = Date.now() - customMs;
+                }
+                rpc.startTimestamp = startTime;
+            } else {
+                startTime = null;
+            }
+
+            return { source: "custom", priority: 4, persistent: true, rpc };
+        }
+
+        // ---- Send ----
+        function sendRPC() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+            try {
+                socket.send(JSON.stringify(buildPayload()));
+            } catch (e) { }
+        }
+
+        function removeRPC() {
+            if (!socket || socket.readyState !== WebSocket.OPEN) return;
+            try {
+                socket.send(JSON.stringify({ source: "custom", action: "remove" }));
+            } catch (e) { }
+        }
+
+        // ---- Activate / Deactivate ----
+        els.activate.addEventListener("click", () => {
+            active = true;
+            if (els.timer.checked) {
+                const customMs = parseTimeInput(els.timerValue.value);
+                startTime = Date.now() - customMs;
+            }
+            els.activate.classList.add("hidden");
+            els.deactivate.classList.remove("hidden");
+            sendRPC();
+            updatePreview();
+            // Auto-save active state
+            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
+        });
+
+        els.deactivate.addEventListener("click", () => {
+            active = false;
+            startTime = null;
+            els.deactivate.classList.add("hidden");
+            els.activate.classList.remove("hidden");
+            removeRPC();
+            updatePreview();
+            // Auto-save inactive state
+            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
+        });
+
+        // ---- Save / Load config ----
+        function getConfig() {
+            return {
+                active: active,
+                details: els.details.value,
+                state: els.state.value,
+                largeImg: els.largeImg.value,
+                largeText: els.largeText.value,
+                smallImg: els.smallImg.value,
+                smallText: els.smallText.value,
+                timer: els.timer.checked,
+                timerValue: els.timerValue.value,
+            };
+        }
+
+        function loadConfig(cfg) {
+            if (!cfg) return;
+            els.details.value = cfg.details || "";
+            els.state.value = cfg.state || "";
+            els.largeImg.value = cfg.largeImg || "";
+            els.largeText.value = cfg.largeText || "";
+            els.smallImg.value = cfg.smallImg || "";
+            els.smallText.value = cfg.smallText || "";
+            els.timer.checked = !!cfg.timer;
+            els.timerValue.value = cfg.timerValue || "00:00:00";
+            els.timerInputGroup.style.display = cfg.timer ? "" : "none";
+        }
+
+        els.save.addEventListener("click", () => {
+            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
+            els.save.textContent = "Saved!";
+            setTimeout(() => { els.save.textContent = "Save Config"; }, 1500);
+        });
+
+        // Load on start
+        try {
+            const saved = localStorage.getItem("customRpcConfig");
+            if (saved) loadConfig(JSON.parse(saved));
+        } catch (e) { }
+
+        // ---- Live Preview ----
+        function updatePreview() {
+            if (!active) {
+                els.preview.innerHTML = '<div class="dc-empty">Configure your status and press Activate</div>';
+                return;
+            }
+
+            const details = els.details.value.trim() || "No details set";
+            const state = els.state.value.trim();
+            const largeImg = els.largeImg.value.trim();
+            const largeText = els.largeText.value.trim();
+            const smallImg = els.smallImg.value.trim();
+            const smallText = els.smallText.value.trim();
+            const showTimer = els.timer.checked;
+
+            let html = '<div class="discord-card-body">';
+
+            // Images
+            if (largeImg) {
+                html += '<div class="dc-images">';
+                html += `<img class="dc-large-img img-tooltip" src="${escapeHtml(largeImg)}" data-tooltip="${escapeHtml(largeText)}" onerror="this.style.display='none'" alt="">`;
+                if (smallImg) {
+                    html += `<img class="dc-small-img img-tooltip" src="${escapeHtml(smallImg)}" data-tooltip="${escapeHtml(smallText)}" onerror="this.style.display='none'" alt="">`;
+                }
+                html += '</div>';
+            }
+
+            // Info
+            html += '<div class="dc-info">';
+            html += `<div class="dc-app-name">Custom Status</div>`;
+            html += `<div class="dc-details">${escapeHtml(details)}</div>`;
+            if (state) html += `<div class="dc-state">${escapeHtml(state)}</div>`;
+            if (showTimer) {
+                const elapsed = startTime ? formatElapsed(Date.now() - startTime) : "00:00 elapsed";
+                html += `<div class="dc-time">${elapsed} elapsed</div>`;
+            }
+            html += '</div></div>';
+
+            els.preview.innerHTML = html;
+        }
+
+        function escapeHtml(str) {
+            const d = document.createElement("div");
+            d.textContent = str;
+            return d.innerHTML;
+        }
+
+        function formatElapsed(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const h = Math.floor(totalSec / 3600);
+            const m = Math.floor((totalSec % 3600) / 60);
+            const s = totalSec % 60;
+            if (h > 0) return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+            return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
+
+        // Update preview on any input change
+        const allInputs = document.querySelectorAll("input");
+        allInputs.forEach(inp => {
+            inp.addEventListener("input", () => { if (active) updatePreview(); });
+            inp.addEventListener("change", () => { if (active) updatePreview(); });
+        });
+
+        // Update timer in preview every second
+        setInterval(() => { if (active) updatePreview(); }, 1000);
+    </script>
+</body>
+
+</html>
