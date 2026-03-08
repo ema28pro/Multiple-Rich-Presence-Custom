@@ -5,8 +5,9 @@ REM Cambiar a main y actualizar
 call git checkout main
 call git pull
 
-REM Cambiar a release
+REM Cambiar a release y resetear
 call git checkout release
+call git reset --hard
 
 REM Traer archivos principales desde main
 call git checkout main -- README.md README-EN.md bridge-state.json DiscordPipeSocket.jar config.json custom-status/ userscripts/ img/
@@ -18,8 +19,11 @@ if %errorlevel% neq 0 (
     echo Cambios commiteados.
 )
 
-REM Siempre pushear (puede haber commits locales pendientes)
-call git push origin release
+REM Pushear forzado con seguridad
+call git push --force-with-lease origin release
+if %errorlevel% neq 0 (
+    echo Error: el push falló. Verifica el estado de la rama remota.
+)
 
 REM Volver a main
 call git checkout main
