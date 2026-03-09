@@ -115,9 +115,20 @@ public class SourceManager {
         lastRpcHash = currentHash;
         // Signal that there was a change, and return the new presence and source name
         return new UpdateResult(true, buildPresence(active.rpcData), active.source);
-}
+    }
 
     private DiscordRichPresence buildPresence(JSONObject rpc) {
+        
+        // Valid image keys
+        String smallKey = rpc.optString("smallImageKey", "");
+        String largeKey = rpc.optString("largeImageKey", "");
+        if (smallKey.startsWith("data:")) {
+            System.err.println("[SourceManager] smallImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
+        }
+        if (largeKey.startsWith("data:")) {
+            System.err.println("[SourceManager] largeImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
+        }
+
         JSONObject truncated = new JSONObject();
 
         copyTruncated(rpc, truncated, "details", 128);
