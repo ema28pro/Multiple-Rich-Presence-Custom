@@ -27,7 +27,7 @@ public class Config {
         this.sourceTimeout = sourceTimeout;
     }
     
-        String defaultClientId = "1479761532412887040"; // This clientId replaces the specific clientIds (tetrioClientId, robloxClientId, youtubeClientId, wplaceClientId, animeClientId) when they are not found
+    private static String mask(String val) {
         return val.isEmpty() ? "(not set)" : val.substring(0, Math.min(6, val.length())) + "...";
     }
 
