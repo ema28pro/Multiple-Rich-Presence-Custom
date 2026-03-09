@@ -196,7 +196,7 @@ public class DiscordPipeSocket {
                             System.out.println("[Bridge] Running Discord callbacks...");
                             lib.Discord_RunCallbacks();
                             if (result.presence != null) {
-                                System.out.println("[Bridge] Updating presence -> " + source + ", presence=" + result.presence);
+                                System.out.println("[Bridge] Updating presence -> " + source);
                                 lib.Discord_UpdatePresence(result.presence);
                             } else {
                                 System.out.println("[Bridge] Clearing presence (all sources expired)");
