@@ -57,6 +57,8 @@ public class DiscordPipeSocket {
 
         final DiscordEventHandlers handlers = new DiscordEventHandlers();
         handlers.ready = (user) -> System.out.println("Welcome " + user.username + "#" + user.discriminator + ".");
+        handlers.errored = (errorCode, message) -> System.err.println("[Discord] Error " + errorCode + ": " + message);
+        handlers.disconnected = (errorCode, message) -> System.err.println("[Discord] Disconnected " + errorCode + ": " + message);
 
         // Initialize Discord RPC once at startup if clientId is configured
         if (!config.clientId.isEmpty()) {
@@ -84,6 +86,7 @@ public class DiscordPipeSocket {
                     if (result.presence != null) {
                         lib.Discord_UpdatePresence(result.presence);
                     } else {
+                        System.out.println("[Bridge] Clearing presence (all sources expired)");
                         lib.Discord_ClearPresence();
                     }
                 }
@@ -122,6 +125,7 @@ public class DiscordPipeSocket {
             public void onMessage(WebSocket conn, String message) {
                 try {
                     JSONObject jsonObject = new JSONObject(message);
+                    System.out.println("[Bridge] WebSocket message from source: " + jsonObject.optString("source", "legacy"));
 
                     // Handle query: {action: "query", source: "custom"}
                     if (jsonObject.has("action") && "query".equals(jsonObject.getString("action"))) {
@@ -186,11 +190,13 @@ public class DiscordPipeSocket {
                         SourceManager.UpdateResult result = sourceManager.checkForChanges();
                         if (result.changed) {
                             if (result.activeSource != null) {
+                                System.out.println("[Bridge] ensureClientId for activeSource=" + result.activeSource);
                                 ensureClientId(lib, handlers, result.activeSource, config);
                             }
+                            System.out.println("[Bridge] Running Discord callbacks...");
                             lib.Discord_RunCallbacks();
                             if (result.presence != null) {
-                                System.out.println("[Bridge] Updating presence -> " + source);
+                                System.out.println("[Bridge] Updating presence -> " + source + ", presence=" + result.presence);
                                 lib.Discord_UpdatePresence(result.presence);
                             } else {
                                 System.out.println("[Bridge] Clearing presence (all sources expired)");
@@ -202,7 +208,7 @@ public class DiscordPipeSocket {
 
                     // Legacy protocol: {cid, rpc}
                     if (!jsonObject.getString("cid").equals(DiscordPipeSocket.lastid)) {
-                        if (DiscordPipeSocket.lastid == "") {
+                        if ("".equals(DiscordPipeSocket.lastid)) {
                             DiscordPipeSocket.lastid = jsonObject.getString("cid");
                             lib.Discord_Initialize(DiscordPipeSocket.lastid, handlers, true, "");
                         } else {
@@ -388,11 +394,20 @@ public class DiscordPipeSocket {
             requiredId = config.robloxClientId;
         } else if ("youtube".equals(source) && config.youtubeClientId != null && !config.youtubeClientId.isEmpty()) {
             requiredId = config.youtubeClientId;
+        } else if ("wplace".equals(source) && config.wplaceClientId != null && !config.wplaceClientId.isEmpty()) {
+            requiredId = config.wplaceClientId;
+        } else if ("anime".equals(source) && config.animeClientId != null && !config.animeClientId.isEmpty()) {
+            requiredId = config.animeClientId;
         }
-        if (requiredId.equals(currentClientId)) return;
+        if (requiredId.equals(currentClientId)) {
+            System.out.println("[Bridge] Client ID unchanged, skipping Discord_Initialize.");
+            return;
+        }
         if (!currentClientId.isEmpty()) {
+            System.out.println("[Bridge] Shutting down previous Discord instance.");
             lib.Discord_Shutdown();
         }
+        System.out.println("[Bridge] Initializing Discord with clientId=" + requiredId);
         lib.Discord_Initialize(requiredId, handlers, true, "");
         currentClientId = requiredId;
         System.out.println("[Bridge] Switched to client ID for: " + source);
