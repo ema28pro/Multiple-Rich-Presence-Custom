@@ -17,6 +17,7 @@
   - TETR.IO: `TETRIO-RPC.js`
   - Anime: `Anime-RPC.js`
   - YouTube: `YouTube-RPC.js`
+  - Wplace: `Wplace-RPC.js`
 
 ## 4. Custom Status (Opcional)
 - Haz clic derecho en el icono de la bandeja → Custom Status

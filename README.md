@@ -16,7 +16,7 @@
 </div>
 
 
-Discord Rich Presence para múltiples actividades: Tetr.io, YouTube, Anime, Roblox y estados personalizados.
+Discord Rich Presence para múltiples actividades: Tetr.io, Wplace, YouTube, Anime, Roblox y estados personalizados.
 
 Basado en [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) de PATXS.
 
@@ -24,11 +24,12 @@ Basado en [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) de P
 
 ## Qué hace
 
-Muestra en tu perfil de Discord lo que estás haciendo — jugando Tetr.io, viendo youtube, viendo anime, jugando Roblox, o un estado personalizado. Solo se muestra una actividad a la vez (la de mayor prioridad).
+Muestra en tu perfil de Discord lo que estás haciendo — jugando Tetr.io, pintando en wplace , viendo youtube, viendo anime, jugando Roblox, o un estado personalizado. Solo se muestra una actividad a la vez (la de mayor prioridad).
 
 | Actividad       | Preview                            |
 | --------------- | ---------------------------------- |
 | Tetr.io         | ![Tetr.io](img/Tetr.io.png)        |
+| Wplace          | ![Wplace](img/Wplace.png)          |
 | Anime           | ![Anime](img/Anime.png)            |
 | YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
@@ -67,12 +68,13 @@ Tiene que estar corriendo mientras uses cualquiera de las funciones. Es silencio
 Con Tampermonkey instalado:
 
 - **TETR.IO** → Instala `userscripts/TETRIO-RPC.js`
+- **Wplace** → Instala `userscripts/Wplace-RPC.js`
 - **Anime** → Instala `userscripts/Anime-RPC.js`
 - **YouTube** → Instala `userscripts/YouTube-RPC.js`
 
 Para instalar: abre Tampermonkey → Nuevo script → pega el contenido del archivo → Guardar.
 
-Solo instala los que necesites. Si solo te interesa TETRIO, ignora el de anime y viceversa.
+Solo instala los que necesites. Si solo te interesa Tetr.io, ignora el de Anime y viceversa.
 
 > **Nota:** Algunos adblockers pueden bloquear los scripts.  
 > Si ves que el RPC no actualiza, recarga la página.
@@ -81,7 +83,8 @@ Solo instala los que necesites. Si solo te interesa TETRIO, ignora el de anime y
 
 El bridge detecta automáticamente cuando estás jugando Roblox desde los logs del juego. No necesitas instalar nada extra.
 
-> **Importante:** Para que se muestre el estado de Rivals, debes **desactivar la detección de Roblox propia de Discord** en Ajustes → Actividades registradas → desactiva Roblox. Si no, Discord muestra su propia actividad y no la del bridge.
+> **Importante:** Para que se muestre el estado de Rivals, debes **desactivar la detección de Roblox propia de Discord** en Ajustes → Actividades registradas → desactiva Roblox. Si no, Discord muestra su propia actividad y no la del bridge.  
+> Tambien puedes desactivar esto, click derecho en el icono de la bandeja de entrada y Rolox Monitor : OFF
 
 Por ahora solo detecta y muestra **Rivals**, pero en el futuro se podrá detectar cualquier juego de Roblox.
 
@@ -118,11 +121,14 @@ Si usas Firefox, ve a `about:config` y cambia `network.websocket.allowInsecureFr
 
 ## Solución de problemas
 
+- **¿Ya esta funcionando?**: Busca el icono de la tuberia en la bandeja del sistema.
 - **No aparece el RPC**: Asegúrate de que `DiscordPipeSocket.jar` está corriendo y Discord está abierto.
 - **Roblox no se detecta**: El bridge necesita que Roblox haya terminado de cargar el juego. Espera unos segundos.
 - **El custom status se activa solo**: Cierra las pestañas viejas del panel de custom status en tu navegador.
 - **Anime-RPC no funciona en AnimeFLV**: Desactiva el adblocker para que el script pueda conectarse.
 - **Errores al cambiar entre userscripts**: Si el estado no se actualiza, recarga la página.
+- **Logs**: Ejecuta `logs.jar` para ver los logs del bridge en tiempo real. Puede ayudar a identificar problemas.
+- **El RPC se desactiva al cambiar de ventana**: Si solo estas usando un userscript puedes quitar el `if (document.hidden) return;` en el `setInterval()` en elscript para que siga funcionando al cambiar de ventana y al estar inactivo.
 
 ## Créditos
 
