@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         YouTube-RPC
 // @version      2.3
-// @author       Custom
+// @author       Ema
 // @description  Discord RPC for YouTube — works with the Node.js bridge
 //
 // @match        https://www.youtube.com/*
