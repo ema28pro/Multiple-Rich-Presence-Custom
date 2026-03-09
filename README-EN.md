@@ -12,7 +12,7 @@
   <img alt="Status Paused" src="https://img.shields.io/badge/Status-Paused-white" class="inline-block mx-1" style="margin: 0px 2px;">
 </div>
 
-Discord Rich Presence for multiple activities: Tetr.io, YouTube, Anime, Roblox, and custom statuses.
+Discord Rich Presence for multiple activities: Tetr.io, Wplace, YouTube, Anime, Roblox, and custom statuses.
 
 Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PATXS.
 
@@ -20,11 +20,12 @@ Based on [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) by PA
 
 ## What it does
 
-Shows what you're doing on your Discord profile — playing Tetr.io, watching YouTube, watching Anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
+Shows what you're doing on your Discord profile — playing Tetr.io, painting on Wplace, watching YouTube, watching Anime, playing Roblox, or a custom status. Only one activity is shown at a time (the highest priority one).
 
 | Activity        | Preview                            |
 | --------------- | ---------------------------------- |
-| Tetr.io        | ![Tetr.io](img/Tetr.io.png)        |
+| Tetr.io         | ![Tetr.io](img/Tetr.io.png)        |
+| Wplace          | ![Wplace](img/Wplace.png)          |
 | Anime           | ![Anime](img/Anime.png)            |
 | YouTube         | ![YouTube](img/YouTube.png)        |
 | Roblox (Rivals) | ![Roblox](img/Roblox%20Rivals.png) |
@@ -63,12 +64,13 @@ It needs to be running while you use any of the features. Run it once and forget
 With Tampermonkey installed:
 
 - **TETR.IO** → Install `userscripts/TETRIO-RPC.js`
+- **Wplace** → Install `userscripts/Wplace-RPC.js`
 - **Anime** → Install `userscripts/Anime-RPC.js`
 - **YouTube** → Install `userscripts/YouTube-RPC.js`
 
 To install: open Tampermonkey → New script → paste the file contents → Save.
 
-Only install the ones you need. If you only care about TETRIO, skip the anime one and vice versa.
+Only install the ones you need. If you only care about Tetr.io, skip the Anime one and vice versa.
 
 > **Note:** Some ad blockers may block scripts.
 > If you see that the RPC isn't updating, reload the page.
@@ -77,7 +79,8 @@ Only install the ones you need. If you only care about TETRIO, skip the anime on
 
 The bridge automatically detects when you're playing Roblox from the game's logs. No extra setup needed.
 
-> **Important:** For the Rivals status to show up, you must **disable Discord's built-in Roblox detection** in Settings → Registered Games → toggle off Roblox. Otherwise Discord shows its own activity instead of the bridge's.
+> **Important:** For the Rivals status to show up, you must **disable Discord's built-in Roblox detection** in Settings → Registered Games → toggle off Roblox. Otherwise Discord shows its own activity instead of the bridge's.  
+> You can also disable this by right-clicking the inbox icon and selecting Rolox Monitor: OFF
 
 For now it only detects and shows **Rivals**, but support for any Roblox game is planned for the future.
 
@@ -114,11 +117,14 @@ If you're using Firefox, go to `about:config` and set `network.websocket.allowIn
 
 ## Troubleshooting
 
+- **Is it working yet?**: Look for the pipe icon in the system tray.
 - **RPC not showing**: Make sure `DiscordPipeSocket.jar` is running and Discord is open.
 - **Roblox not detected**: The bridge needs Roblox to finish loading the game. Wait a few seconds.
 - **Custom status activates by itself**: Close any old custom status panel tabs in your browser.
 - **Anime-RPC doesn't work on AnimeFLV**: Disable the adblocker so the script can connect.
 - **Errors when switching between userscripts**: If the status doesn't update, reload the page.
+- **Logs**: Run `logs.jar` to view real-time bridge logs. This can help identify problems.
+- **RPC is disabled when switching windows**: If you are only using a user script, you can remove the `if (document.hidden) return;` from the `setInterval()` in the script so that it continues to function when switching windows and when idle.
 
 ## Credits
 

@@ -5,7 +5,7 @@
 ## 1. Requisitos
 - **Java 8+** instalado
 - **Discord** abierto
-- (Opcional) **Tampermonkey** en tu navegador para userscripts
+- **Tampermonkey** en tu navegador para los userscripts
 
 ## 2. Instalación
 1. Descarga el ZIP desde la [rama release](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)
@@ -17,6 +17,7 @@
   - TETR.IO: `TETRIO-RPC.js`
   - Anime: `Anime-RPC.js`
   - YouTube: `YouTube-RPC.js`
+  - Wplace: `Wplace-RPC.js`
 
 ## 4. Custom Status (Opcional)
 - Haz clic derecho en el icono de la bandeja → Custom Status
