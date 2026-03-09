@@ -10,16 +10,25 @@ public class Config {
     public final String tetrioClientId;
     public final String robloxClientId;
     public final String youtubeClientId;
+    public final String wplaceClientId;
+    public final String animeClientId;
     public final int wsPort;
     public final long sourceTimeout;
 
-    private Config(String clientId, String tetrioClientId, String robloxClientId, String youtubeClientId, int wsPort, long sourceTimeout) {
+    private Config(String clientId, String tetrioClientId, String robloxClientId, String youtubeClientId,
+            String wplaceClientId, String animeClientId, int wsPort, long sourceTimeout) {
         this.clientId = clientId;
         this.tetrioClientId = tetrioClientId;
         this.robloxClientId = robloxClientId;
         this.youtubeClientId = youtubeClientId;
+        this.wplaceClientId = wplaceClientId;
+        this.animeClientId = animeClientId;
         this.wsPort = wsPort;
         this.sourceTimeout = sourceTimeout;
+    }
+    
+    private static String mask(String val) {
+        return val.isEmpty() ? "(not set)" : val.substring(0, Math.min(6, val.length())) + "...";
     }
 
     public static Config load() {
@@ -35,7 +44,7 @@ public class Config {
 
             if (!configFile.exists()) {
                 System.out.println("[Config] config.json not found next to JAR, using defaults.");
-                return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultPort, defaultTimeout);
+                return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultPort, defaultTimeout);
             }
 
             FileInputStream fis = new FileInputStream(configFile);
@@ -49,23 +58,26 @@ public class Config {
             String tetrioClientId = json.optString("tetrioClientId", defaultClientId);
             String robloxClientId = json.optString("robloxClientId", defaultClientId);
             String youtubeClientId = json.optString("youtubeClientId", defaultClientId);
+            String wplaceClientId = json.optString("wplaceClientId", defaultClientId);
+            String animeClientId = json.optString("animeClientId", defaultClientId);
             int wsPort = json.optInt("wsPort", defaultPort);
             long sourceTimeout = json.optLong("sourceTimeout", defaultTimeout);
 
-            System.out.println("[Config] Loaded config.json — clientId: " +
-                (clientId.isEmpty() ? "(not set)" : clientId.substring(0, Math.min(6, clientId.length())) + "...") +
-                ", tetrioClientId: " +
-                (tetrioClientId.isEmpty() ? "(not set)" : tetrioClientId.substring(0, Math.min(6, tetrioClientId.length())) + "...") +
-                ", robloxClientId: " +
-                (robloxClientId.isEmpty() ? "(not set)" : robloxClientId.substring(0, Math.min(6, robloxClientId.length())) + "...") +
-                ", youtubeClientId: " +
-                (youtubeClientId.isEmpty() ? "(not set)" : youtubeClientId.substring(0, Math.min(6, youtubeClientId.length())) + "...") +
-                ", port: " + wsPort + ", timeout: " + sourceTimeout + "ms");
+            String fmt = "  %-18s %s";
+            System.out.println("[Config] Loaded config.json");
+            System.out.printf((fmt) + "%n", "clientId:",      mask(clientId));
+            System.out.printf((fmt) + "%n", "tetrioClientId:", mask(tetrioClientId));
+            System.out.printf((fmt) + "%n", "robloxClientId:", mask(robloxClientId));
+            System.out.printf((fmt) + "%n", "youtubeClientId:", mask(youtubeClientId));
+            System.out.printf((fmt) + "%n", "wplaceClientId:", mask(wplaceClientId));
+            System.out.printf((fmt) + "%n", "animeClientId:", mask(animeClientId));
+            System.out.printf((fmt) + "%n", "port:",          wsPort);
+            System.out.printf((fmt) + "%n", "timeout:",       sourceTimeout + "ms");
 
-            return new Config(clientId, tetrioClientId, robloxClientId, youtubeClientId, wsPort, sourceTimeout);
+            return new Config(clientId, tetrioClientId, robloxClientId, youtubeClientId, wplaceClientId, animeClientId, wsPort, sourceTimeout);
         } catch (Exception e) {
             System.err.println("[Config] Error loading config.json: " + e.getMessage());
-            return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultPort, defaultTimeout);
+            return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultPort, defaultTimeout);
         }
     }
 }
