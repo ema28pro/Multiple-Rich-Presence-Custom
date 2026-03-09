@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name         Wplace-RPC
-// @version      1.4
+// @version      1.5
 // @author       Ema
 // @description  Discord RPC for wplace.live
 //
@@ -17,13 +17,10 @@
     const INTERVAL_MS = 3000;
     const RECONNECT_DELAY_MS = 5000;
 
-    // ─── Helpers ─────────────────────────────────────────────────────────────────
-
     let cachedLevel = null;
     let cachedPixels = null;
 
     function getUserInfo() {
-        // Nivel: span con font-semibold dentro de text-secondary
         const levelEl = document.querySelector('.text-secondary .font-semibold');
         if (levelEl) {
             const match = levelEl.textContent.match(/Level\s*(\d+)/i);
@@ -32,10 +29,9 @@
 
         // Píxeles pintados: span con text-primary y font-semibold
         const pixelsEl = document.querySelector('.text-primary.font-semibold');
-
         if (pixelsEl) {
             const match = pixelsEl.textContent.match(/^[\d,]+/);
-            if (match) cachedPixels = match[0]; // solo toma los números y comas del inicio
+            if (match) cachedPixels = match[0];
         }
 
         const colorGrid = document.querySelector('div[class*="grid-cols-8"]');
@@ -104,6 +100,8 @@
                 details: isPainting ? "Painting pixels" : "Browsing the canvas",
                 state: stateText,
                 startTimestamp: stateStart,
+                largeImageKey: "icon",
+                largeImageText: "Wplace.live",
             }
         };
 
