@@ -1,5 +1,7 @@
 package br.com.brforgers.armelin.dps;
 
+import java.util.logging.Logger;
+
 import club.minnced.discord.rpc.DiscordRichPresence;
 import com.google.gson.Gson;
 import java.util.Map;
@@ -7,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.json.JSONObject;
 
 public class SourceManager {
+    private static final Logger logger = Logger.getLogger("DPS");
 
     public static class SourceEntry {
         public final String source;
@@ -72,11 +75,13 @@ public class SourceManager {
     }
 
     public SourceEntry getActiveSource() {
-        // Select the most relevant source based on priority and recency, ignoring expired non-persistent sources
+        // Select the most relevant source based on priority and recency, ignoring
+        // expired non-persistent sources
         long now = System.currentTimeMillis();
         SourceEntry best = null;
         for (SourceEntry entry : sources.values()) {
-            if (!entry.persistent && now - entry.lastUpdate > timeout) continue;
+            if (!entry.persistent && now - entry.lastUpdate > timeout)
+                continue;
             if (best == null) {
                 best = entry;
             } else if (entry.priority > best.priority) {
@@ -118,15 +123,17 @@ public class SourceManager {
     }
 
     private DiscordRichPresence buildPresence(JSONObject rpc) {
-        
+
         // Valid image keys
         String smallKey = rpc.optString("smallImageKey", "");
         String largeKey = rpc.optString("largeImageKey", "");
         if (smallKey.startsWith("data:")) {
-            System.err.println("[SourceManager] smallImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
+            logger.severe(
+                    "[SourceManager] smallImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
         }
         if (largeKey.startsWith("data:")) {
-            System.err.println("[SourceManager] largeImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
+            logger.severe(
+                    "[SourceManager] largeImageKey is base64 -- Discord will ignore it. Use HTTPS URL or asset name.");
         }
 
         JSONObject truncated = new JSONObject();
@@ -153,14 +160,16 @@ public class SourceManager {
             truncated.put("partyMax", rpc.getInt("partyMax"));
         }
 
-        // buttons field is intentionally ignored — DiscordRichPresence has no such field,
+        // buttons field is intentionally ignored — DiscordRichPresence has no such
+        // field,
         // Gson will skip unknown keys during deserialization
 
         return gson.fromJson(truncated.toString(), DiscordRichPresence.class);
     }
 
     private static void copyTruncated(JSONObject src, JSONObject dst, String key, int maxLen) {
-        // This method copies a string field from src to dst, truncating it to maxLen characters if necessary.
+        // This method copies a string field from src to dst, truncating it to maxLen
+        // characters if necessary.
         // src = source JSON object
         // dst = destination JSON object
         if (src.has(key) && !src.isNull(key)) {
@@ -173,16 +182,19 @@ public class SourceManager {
     }
 
     private static void copyIfPresent(JSONObject src, JSONObject dst, String key) {
-        // This method copies a field from src to dst if it exists and is not null, without any modification.
+        // This method copies a field from src to dst if it exists and is not null,
+        // without any modification.
         if (src.has(key) && !src.isNull(key)) {
             dst.put(key, src.get(key));
         }
     }
 
     private static void copyTimestamp(JSONObject src, JSONObject dst, String key) {
-        // This method copies a timestamp field from src to dst, converting it from milliseconds to seconds.
+        // This method copies a timestamp field from src to dst, converting it from
+        // milliseconds to seconds.
         if (!src.has(key) || src.isNull(key)) {
-            dst.put(key, 0); // Discord treats 0 as "no timestamp", so if the field is missing or null, we set it to 0
+            dst.put(key, 0); // Discord treats 0 as "no timestamp", so if the field is missing or null, we
+                             // set it to 0
             return;
         }
         try {
@@ -199,7 +211,8 @@ public class SourceManager {
                 dst.put(key, 0);
             }
         } catch (Exception ignored) {
-            dst.put(key, 0); // If there's any error parsing the timestamp, we set it to 0 to avoid sending invalid data to Discord
+            dst.put(key, 0); // If there's any error parsing the timestamp, we set it to 0 to avoid sending
+                             // invalid data to Discord
         }
     }
 }

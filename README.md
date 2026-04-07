@@ -94,14 +94,15 @@ Haz clic derecho en el icono de la bandeja → **Custom Status**. Se abre un pan
 
 ## Configuración
 
-El archivo `config.json` viene preconfigurado y listo para usar. Solo necesitas cambiarlo si quieres personalizar el nombre de la app en Discord.
+El archivo `config.json` viene preconfigurado y listo para usar. Solo necesitas cambiarlo si quieres personalizar el nombre de la app en Discord o la ubicación de los archivos de registro (logs).
 
 ```json
 {
   "clientId": "1479761532412887040",
   "tetrioClientId": "688741895307788290",
   "wsPort": 6680,
-  "sourceTimeout": 15000
+  "sourceTimeout": 15000,
+  "logFile": "logs/dps.log"
 }
 ```
 
@@ -127,7 +128,7 @@ Si usas Firefox, ve a `about:config` y cambia `network.websocket.allowInsecureFr
 - **El custom status se activa solo**: Cierra las pestañas viejas del panel de custom status en tu navegador.
 - **Anime-RPC no funciona en AnimeFLV**: Desactiva el adblocker para que el script pueda conectarse.
 - **Errores al cambiar entre userscripts**: Si el estado no se actualiza, recarga la página.
-- **Logs**: Ejecuta `logs.jar` para ver los logs del bridge en tiempo real. Puede ayudar a identificar problemas.
+- **Logs y depuración**: El programa de Java ahora guarda automáticamente un registro de todo lo que sucede. Por defecto se crea en `logs/dps.log` junto al archivo `.jar` y puedes abrirlo con cualquier editor de texto para investigar qué falló.
 - **El RPC se desactiva al cambiar de ventana**: Si solo estas usando un userscript puedes quitar el `if (document.hidden) return;` en el `setInterval()` en elscript para que siga funcionando al cambiar de ventana y al estar inactivo.
 
 ## Créditos
