@@ -54,7 +54,7 @@ if %errorlevel% neq 0 (
 )
 
 echo [3/3] Verifying...
-jar tf "DiscordPipeSocket.jar" | findstr /i "Config.class SourceManager"
+jar tf "DiscordPipeSocket.jar" | findstr /i "Config.class SourceManager DiscordIPC LoggerConfig"
 echo.
 echo ============================================
 echo  Build successful!
