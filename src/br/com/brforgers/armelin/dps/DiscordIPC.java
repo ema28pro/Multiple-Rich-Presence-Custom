@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
+import java.util.logging.Logger;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -19,6 +20,7 @@ import org.json.JSONObject;
  * - Automatic client ID switching and reconnection
  */
 public class DiscordIPC {
+    private static final Logger logger = Logger.getLogger("DPS");
 
     private static RandomAccessFile pipe = null;
     private static volatile boolean connected = false;
@@ -82,7 +84,7 @@ public class DiscordIPC {
         if (requiredId.equals(currentClientId) && isConnected()) {
             return;
         }
-        System.out.println("[DiscordIPC] Switching client ID for source '" + source + "' -> " + requiredId);
+        logger.info("[DiscordIPC] Switching client ID for source '" + source + "' -> " + requiredId);
         disconnect();
         connect(requiredId);
     }
@@ -121,14 +123,14 @@ public class DiscordIPC {
                 readerThread.setDaemon(true);
                 readerThread.start();
 
-                System.out.println("[DiscordIPC] Connected to pipe discord-ipc-" + i + " with clientId=" + clientId);
+                logger.info("[DiscordIPC] Connected to pipe discord-ipc-" + i + " with clientId=" + clientId);
                 return true;
             } catch (Exception e) {
                 // Pipe not available, continue scanning
             }
         }
 
-        System.err.println("[DiscordIPC] Could not connect to any Discord IPC pipe (is Discord running?)");
+        logger.severe("[DiscordIPC] Could not connect to any Discord IPC pipe (is Discord running?)");
         connected = false;
         return false;
     }
@@ -155,16 +157,16 @@ public class DiscordIPC {
                             if ("DISPATCH".equals(obj.optString("cmd")) && "READY".equals(obj.optString("evt"))) {
                                 JSONObject user = obj.optJSONObject("data") != null ? obj.getJSONObject("data").optJSONObject("user") : null;
                                 if (user != null) {
-                                    System.out.println("[DiscordIPC] Handshake OK. Welcome " + user.optString("username", "user") + ".");
+                                    logger.info("[DiscordIPC] Handshake OK. Welcome " + user.optString("username", "user") + ".");
                                 }
                             } else if ("ERROR".equals(obj.optString("evt"))) {
-                                System.err.println("[DiscordIPC] Error from Discord: " + obj.optString("data"));
+                                logger.severe("[DiscordIPC] Error from Discord: " + obj.optString("data"));
                             }
                         } catch (Exception ignored) { }
                     } else if (opcode == OP_PING) {
                         sendPacket(OP_PONG, json);
                     } else if (opcode == OP_CLOSE) {
-                        System.out.println("[DiscordIPC] Received close from Discord: " + json);
+                        logger.info("[DiscordIPC] Received close from Discord: " + json);
                         break;
                     }
                 }
@@ -331,7 +333,7 @@ public class DiscordIPC {
             sendPacket(OP_FRAME, frame.toString());
             return true;
         } catch (Exception e) {
-            System.err.println("[DiscordIPC] Error sending presence: " + e.getMessage());
+            logger.severe("[DiscordIPC] Error sending presence: " + e.getMessage());
             connected = false;
             return false;
         }
@@ -356,7 +358,7 @@ public class DiscordIPC {
             sendPacket(OP_FRAME, frame.toString());
             return true;
         } catch (Exception e) {
-            System.err.println("[DiscordIPC] Error clearing presence: " + e.getMessage());
+            logger.severe("[DiscordIPC] Error clearing presence: " + e.getMessage());
             return false;
         }
     }

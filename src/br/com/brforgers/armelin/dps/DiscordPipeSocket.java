@@ -25,8 +25,10 @@ import org.java_websocket.handshake.ClientHandshake;
 import org.java_websocket.server.WebSocketServer;
 import org.json.JSONObject;
 import java.net.InetSocketAddress;
+import java.util.logging.Logger;
 
 public class DiscordPipeSocket {
+    private static final Logger logger = Logger.getLogger("DPS");
 
     static String lastid = "";
     static final Gson gson = new Gson();
@@ -41,6 +43,7 @@ public class DiscordPipeSocket {
 
         // Load configuration
         final Config config = Config.load();
+        LoggerConfig.setup(config.logFile);
 
         int port;
         try {
@@ -56,20 +59,21 @@ public class DiscordPipeSocket {
         final JSONObject savedState = loadBridgeState(sourceManager);
 
         final DiscordEventHandlers handlers = new DiscordEventHandlers();
-        handlers.ready = (user) -> System.out.println("Welcome " + user.username + "#" + user.discriminator + ".");
-        handlers.errored = (errorCode, message) -> System.err.println("[Discord] Error " + errorCode + ": " + message);
-        handlers.disconnected = (errorCode, message) -> System.err.println("[Discord] Disconnected " + errorCode + ": " + message);
+        handlers.ready = (user) -> logger.info("Welcome " + user.username + "#" + user.discriminator + ".");
+        handlers.errored = (errorCode, message) -> logger.severe("[Discord] Error " + errorCode + ": " + message);
+        handlers.disconnected = (errorCode, message) -> logger
+                .severe("[Discord] Disconnected " + errorCode + ": " + message);
 
         // Initialize Discord RPC once at startup if clientId is configured
         if (!config.clientId.isEmpty()) {
             boolean ipcOk = DiscordIPC.connect(config.clientId);
             if (ipcOk) {
-                System.out.println("[Bridge] DiscordIPC initialized with clientId from config.json");
+                logger.info("[Bridge] DiscordIPC initialized with clientId from config.json");
             } else {
                 lib.Discord_Initialize(config.clientId, handlers, true, "");
                 currentClientId = config.clientId;
                 lastid = config.clientId;
-                System.out.println("[Bridge] Discord initialized (fallback) with clientId from config.json");
+                logger.info("[Bridge] Discord initialized (fallback) with clientId from config.json");
             }
         }
 
@@ -85,7 +89,7 @@ public class DiscordPipeSocket {
                 SourceManager.UpdateResult result = sourceManager.checkForChanges();
                 applyPresenceUpdate(result, config, lib, handlers);
             } catch (Exception e) {
-                System.err.println("[Bridge] Cleanup error: " + e.getMessage());
+                logger.severe("[Bridge] Cleanup error: " + e.getMessage());
             }
         }, 5, 5, TimeUnit.SECONDS);
 
@@ -94,24 +98,24 @@ public class DiscordPipeSocket {
         if (savedState != null && savedState.has("robloxMonitorEnabled")) {
             boolean rmEnabled = savedState.optBoolean("robloxMonitorEnabled", true);
             robloxMonitor.setEnabled(rmEnabled);
-            System.out.println("[Bridge] Roblox Monitor restored: " + (rmEnabled ? "ON" : "OFF"));
+            logger.info("[Bridge] Roblox Monitor restored: " + (rmEnabled ? "ON" : "OFF"));
         }
         scheduler.scheduleAtFixedRate(() -> {
             try {
                 robloxMonitor.run();
             } catch (Exception e) {
-                System.err.println("[RobloxMonitor] Scheduled error: " + e.getMessage());
+                logger.severe("[RobloxMonitor] Scheduled error: " + e.getMessage());
             }
         }, 10, 10, TimeUnit.SECONDS);
-        System.out.println("[Bridge] Roblox Desktop Monitor active");
+        logger.info("[Bridge] Roblox Desktop Monitor active");
 
         WebSocketServer server = new WebSocketServer(new InetSocketAddress("localhost", port)) {
             public void onOpen(WebSocket conn, ClientHandshake handshake) {
-                System.out.println("[Bridge] Client connected: " + conn.getRemoteSocketAddress());
+                logger.info("[Bridge] Client connected: " + conn.getRemoteSocketAddress());
             }
 
             public void onClose(WebSocket conn, int code, String reason, boolean remote) {
-                System.out.println("[Bridge] Client disconnected (code: " + code + ")");
+                logger.info("[Bridge] Client disconnected (code: " + code + ")");
                 // Do NOT call Discord_Shutdown() here — other sources may still be active.
                 // Discord RPC stays alive; sources expire via SourceManager timeout.
             }
@@ -119,7 +123,8 @@ public class DiscordPipeSocket {
             public void onMessage(WebSocket conn, String message) {
                 try {
                     JSONObject jsonObject = new JSONObject(message);
-                    System.out.println("[Bridge] WebSocket message from source: " + jsonObject.optString("source", "legacy"));
+                    logger.info(
+                            "[Bridge] WebSocket message from source: " + jsonObject.optString("source", "legacy"));
 
                     // Handle query: {action: "query", source: "custom"}
                     if (jsonObject.has("action") && "query".equals(jsonObject.getString("action"))) {
@@ -145,7 +150,7 @@ public class DiscordPipeSocket {
 
                         // Handle remove action: {source, action: "remove"}
                         if (jsonObject.has("action") && "remove".equals(jsonObject.getString("action"))) {
-                            System.out.println("[Bridge] Removing source: " + source);
+                            logger.info("[Bridge] Removing source: " + source);
                             sourceManager.removeSource(source);
                             SourceManager.UpdateResult result = sourceManager.checkForChanges();
                             applyPresenceUpdate(result, config, lib, handlers);
@@ -155,12 +160,14 @@ public class DiscordPipeSocket {
                         int priority = jsonObject.getInt("priority");
                         JSONObject rpc = jsonObject.getJSONObject("rpc");
                         boolean persistent = jsonObject.optBoolean("persistent", false);
-                        System.out.println("[Bridge] Received from source: " + source + " (priority: " + priority + ", persistent: " + persistent + ")");
+                        logger.info("[Bridge] Received from source: " + source + " (priority: " + priority
+                                + ", persistent: " + persistent + ")");
 
                         // Custom source must always be persistent (sent by legitimate HTML page).
-                        // Reject phantom custom updates (e.g. cached tabs sending without persistent field).
+                        // Reject phantom custom updates (e.g. cached tabs sending without persistent
+                        // field).
                         if ("custom".equals(source) && !persistent) {
-                            System.out.println("[Bridge] Ignoring non-persistent custom source (phantom client)");
+                            logger.info("[Bridge] Ignoring non-persistent custom source (phantom client)");
                             return;
                         }
 
@@ -202,16 +209,16 @@ public class DiscordPipeSocket {
                         lib.Discord_UpdatePresence(discordRichPresence);
                     }
                 } catch (Exception e) {
-                    System.err.println("[Bridge] Error processing message: " + e.getMessage());
+                    logger.severe("[Bridge] Error processing message: " + e.getMessage());
                 }
             }
 
             public void onError(WebSocket conn, Exception ex) {
-                System.err.println("[Bridge] WebSocket error: " + ex.getMessage());
+                logger.severe("[Bridge] WebSocket error: " + ex.getMessage());
             }
 
             public void onStart() {
-                System.out.println("Websocket started on port: " + this.getPort());
+                logger.info("Websocket started on port: " + this.getPort());
             }
         };
 
@@ -231,21 +238,21 @@ public class DiscordPipeSocket {
             try {
                 File htmlFile = new File("custom-status/index.html").getAbsoluteFile();
                 if (!htmlFile.exists()) {
-                    System.err.println("[Bridge] custom-status/index.html not found at: " + htmlFile.getPath());
+                    logger.severe("[Bridge] custom-status/index.html not found at: " + htmlFile.getPath());
                     return;
                 }
                 String url = htmlFile.toURI().toString();
                 try {
-                    Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "chrome", url});
+                    Runtime.getRuntime().exec(new String[] { "cmd", "/c", "start", "chrome", url });
                 } catch (Exception e1) {
                     try {
-                        Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "msedge", url});
+                        Runtime.getRuntime().exec(new String[] { "cmd", "/c", "start", "msedge", url });
                     } catch (Exception e2) {
                         Desktop.getDesktop().browse(htmlFile.toURI());
                     }
                 }
             } catch (Exception e) {
-                System.err.println("[Bridge] Could not open browser: " + e.getMessage());
+                logger.severe("[Bridge] Could not open browser: " + e.getMessage());
             }
         });
         MenuItem item4 = new MenuItem("Roblox Monitor: " + (robloxMonitor.isEnabled() ? "ON" : "OFF"));
@@ -253,7 +260,7 @@ public class DiscordPipeSocket {
             boolean nowEnabled = !robloxMonitor.isEnabled();
             robloxMonitor.setEnabled(nowEnabled);
             item4.setLabel("Roblox Monitor: " + (nowEnabled ? "ON" : "OFF"));
-            System.out.println("[Bridge] Roblox Monitor " + (nowEnabled ? "enabled" : "disabled"));
+            logger.info("[Bridge] Roblox Monitor " + (nowEnabled ? "enabled" : "disabled"));
             saveBridgeState(sourceManager, robloxMonitor);
         });
         popMenu.add(item1);
@@ -261,18 +268,28 @@ public class DiscordPipeSocket {
         popMenu.add(item4);
         popMenu.addSeparator();
         popMenu.add(item2);
-        BufferedImage img = ImageIO.read(DiscordPipeSocket.class.getResource("/pipe_right_small.png"));
-        int trayiconw = (new TrayIcon(img)).getSize().width;
-        TrayIcon trayIcon = new TrayIcon(img.getScaledInstance(trayiconw, -1, 4), "Discord Pipe Socket", popMenu);
-        SystemTray.getSystemTray().add(trayIcon);
+        if (SystemTray.isSupported()) {
+            try {
+                BufferedImage img = ImageIO.read(DiscordPipeSocket.class.getResource("/pipe_right_small.png"));
+                int trayiconw = (new TrayIcon(img)).getSize().width;
+                TrayIcon trayIcon = new TrayIcon(img.getScaledInstance(trayiconw, -1, 4), "Discord Pipe Socket",
+                        popMenu);
+                SystemTray.getSystemTray().add(trayIcon);
+            } catch (Exception e) {
+                logger.severe("[Bridge] Could not initialize System Tray: " + e.getMessage());
+            }
+        } else {
+            logger.info(
+                    "[Bridge] System Tray is not supported on this OS/Desktop environment. Running without tray icon.");
+        }
         server.run();
     }
 
     static File getJarDir() {
         try {
             return new File(
-                DiscordPipeSocket.class.getProtectionDomain().getCodeSource().getLocation().toURI()
-            ).getParentFile();
+                    DiscordPipeSocket.class.getProtectionDomain().getCodeSource().getLocation().toURI())
+                    .getParentFile();
         } catch (Exception e) {
             return new File(".");
         }
@@ -301,9 +318,10 @@ public class DiscordPipeSocket {
             FileWriter writer = new FileWriter(stateFile);
             writer.write(state.toString(2));
             writer.close();
-            System.out.println("[Bridge] State saved (custom: " + (custom != null) + ", robloxMonitor: " + rm.isEnabled() + ")");
+            logger.info(
+                    "[Bridge] State saved (custom: " + (custom != null) + ", robloxMonitor: " + rm.isEnabled() + ")");
         } catch (Exception e) {
-            System.err.println("[Bridge] Error saving state: " + e.getMessage());
+            logger.severe("[Bridge] Error saving state: " + e.getMessage());
         }
     }
 
@@ -317,11 +335,12 @@ public class DiscordPipeSocket {
                 File oldFile = new File(getJarDir(), "custom-state.json");
                 if (oldFile.exists()) {
                     oldFile.renameTo(stateFile);
-                    System.out.println("[Bridge] Migrated custom-state.json -> bridge-state.json");
+                    logger.info("[Bridge] Migrated custom-state.json -> bridge-state.json");
                 }
             }
 
-            if (!stateFile.exists()) return null;
+            if (!stateFile.exists())
+                return null;
 
             FileInputStream fis = new FileInputStream(stateFile);
             byte[] data = new byte[(int) stateFile.length()];
@@ -338,9 +357,9 @@ public class DiscordPipeSocket {
                     int priority = customState.optInt("priority", 4);
                     JSONObject rpc = customState.getJSONObject("rpc");
                     sm.updatePersistentSource("custom", priority, rpc);
-                    System.out.println("[Bridge] Custom state restored from previous session");
+                    logger.info("[Bridge] Custom state restored from previous session");
                 } else {
-                    System.out.println("[Bridge] Custom state: inactive");
+                    logger.info("[Bridge] Custom state: inactive");
                 }
             } else if (state.has("active")) {
                 // Old format: { active, priority, rpc } (from custom-state.json)
@@ -348,15 +367,15 @@ public class DiscordPipeSocket {
                     int priority = state.optInt("priority", 4);
                     JSONObject rpc = state.getJSONObject("rpc");
                     sm.updatePersistentSource("custom", priority, rpc);
-                    System.out.println("[Bridge] Custom state restored (old format)");
+                    logger.info("[Bridge] Custom state restored (old format)");
                 } else {
-                    System.out.println("[Bridge] Custom state: inactive");
+                    logger.info("[Bridge] Custom state: inactive");
                 }
             }
 
             return state;
         } catch (Exception e) {
-            System.err.println("[Bridge] Error loading state: " + e.getMessage());
+            logger.severe("[Bridge] Error loading state: " + e.getMessage());
         }
         return null;
     }
@@ -373,19 +392,19 @@ public class DiscordPipeSocket {
 
         if (DiscordIPC.isConnected()) {
             if (result.rpcData != null) {
-                System.out.println("[Bridge] Updating presence via DiscordIPC -> " + result.activeSource);
+                logger.info("[Bridge] Updating presence via DiscordIPC -> " + result.activeSource);
                 DiscordIPC.updatePresence(result.rpcData);
             } else {
-                System.out.println("[Bridge] Clearing presence via DiscordIPC (all sources expired/removed)");
+                logger.info("[Bridge] Clearing presence via DiscordIPC (all sources expired/removed)");
                 DiscordIPC.clearPresence();
             }
         } else {
             lib.Discord_RunCallbacks();
             if (result.presence != null) {
-                System.out.println("[Bridge] Updating presence via Minnced fallback -> " + result.activeSource);
+                logger.info("[Bridge] Updating presence via Minnced fallback -> " + result.activeSource);
                 lib.Discord_UpdatePresence(result.presence);
             } else {
-                System.out.println("[Bridge] Clearing presence via Minnced fallback (all sources expired)");
+                logger.info("[Bridge] Clearing presence via Minnced fallback (all sources expired)");
                 lib.Discord_ClearPresence();
             }
         }
@@ -395,7 +414,8 @@ public class DiscordPipeSocket {
         String requiredId = config.clientId;
         if ("tetrio".equals(source) && config.tetrioClientId != null && !config.tetrioClientId.isEmpty()) {
             requiredId = config.tetrioClientId;
-        } else if (("roblox".equals(source) || "roblox-desktop".equals(source)) && config.robloxClientId != null && !config.robloxClientId.isEmpty()) {
+        } else if (("roblox".equals(source) || "roblox-desktop".equals(source)) && config.robloxClientId != null
+                && !config.robloxClientId.isEmpty()) {
             requiredId = config.robloxClientId;
         } else if ("youtube".equals(source) && config.youtubeClientId != null && !config.youtubeClientId.isEmpty()) {
             requiredId = config.youtubeClientId;
@@ -405,16 +425,16 @@ public class DiscordPipeSocket {
             requiredId = config.animeClientId;
         }
         if (requiredId.equals(currentClientId)) {
-            System.out.println("[Bridge] Client ID unchanged, skipping Discord_Initialize.");
+            logger.info("[Bridge] Client ID unchanged, skipping Discord_Initialize.");
             return;
         }
         if (!currentClientId.isEmpty()) {
-            System.out.println("[Bridge] Shutting down previous Discord instance.");
+            logger.info("[Bridge] Shutting down previous Discord instance.");
             lib.Discord_Shutdown();
         }
-        System.out.println("[Bridge] Initializing Discord with clientId=" + requiredId);
+        logger.info("[Bridge] Initializing Discord with clientId=" + requiredId);
         lib.Discord_Initialize(requiredId, handlers, true, "");
         currentClientId = requiredId;
-        System.out.println("[Bridge] Switched to client ID for: " + source);
+        logger.info("[Bridge] Switched to client ID for: " + source);
     }
 }

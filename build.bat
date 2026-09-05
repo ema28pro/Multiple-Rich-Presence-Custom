@@ -26,7 +26,8 @@ javac -cp "DiscordPipeSocket.jar" -d "build" --release 8 ^
     src\br\com\brforgers\armelin\dps\DiscordIPC.java ^
     src\br\com\brforgers\armelin\dps\SourceManager.java ^
     src\br\com\brforgers\armelin\dps\RobloxMonitor.java ^
-    src\br\com\brforgers\armelin\dps\DiscordPipeSocket.java
+    src\br\com\brforgers\armelin\dps\DiscordPipeSocket.java ^
+    src\br\com\brforgers\armelin\dps\LoggerConfig.java
 
 if %errorlevel% neq 0 (
     echo.

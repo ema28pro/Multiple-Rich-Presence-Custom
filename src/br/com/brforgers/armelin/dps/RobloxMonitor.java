@@ -1,5 +1,7 @@
 package br.com.brforgers.armelin.dps;
 
+import java.util.logging.Logger;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -11,6 +13,7 @@ import java.util.regex.Pattern;
 import org.json.JSONObject;
 
 public class RobloxMonitor implements Runnable {
+    private static final Logger logger = Logger.getLogger("DPS");
 
     private final SourceManager sourceManager;
     private final int priority;
@@ -38,7 +41,7 @@ public class RobloxMonitor implements Runnable {
             sourceManager.removeSource("roblox-desktop");
             wasRunning = false;
             startTime = 0;
-            System.out.println("[RobloxMonitor] Disabled — cleared source");
+            logger.info("[RobloxMonitor] Disabled — cleared source");
         }
     }
 
@@ -50,7 +53,7 @@ public class RobloxMonitor implements Runnable {
 
             if (!isRobloxRunning()) {
                 if (wasRunning) {
-                    System.out.println("[RobloxMonitor] Roblox not running, clearing source");
+                    logger.info("[RobloxMonitor] Roblox not running, clearing source");
                     sourceManager.removeSource("roblox-desktop");
                     wasRunning = false;
                     startTime = 0;
@@ -61,7 +64,7 @@ public class RobloxMonitor implements Runnable {
             // Roblox is running — check logs for RIVALS PlaceID
             if (!isRivalsInLogs()) {
                 if (wasRunning) {
-                    System.out.println("[RobloxMonitor] Roblox running but not RIVALS, clearing source");
+                    logger.info("[RobloxMonitor] Roblox running but not RIVALS, clearing source");
                     sourceManager.removeSource("roblox-desktop");
                     wasRunning = false;
                     startTime = 0;
@@ -72,7 +75,7 @@ public class RobloxMonitor implements Runnable {
             if (!wasRunning) {
                 startTime = System.currentTimeMillis();
                 wasRunning = true;
-                System.out.println("[RobloxMonitor] Detected: " + GAME_NAME);
+                logger.info("[RobloxMonitor] Detected: " + GAME_NAME);
             }
 
             JSONObject rpc = new JSONObject();
@@ -84,18 +87,16 @@ public class RobloxMonitor implements Runnable {
             sourceManager.updateSource("roblox-desktop", priority, rpc);
 
         } catch (Exception e) {
-            System.err.println("[RobloxMonitor] Error: " + e.getMessage());
+            logger.severe("[RobloxMonitor] Error: " + e.getMessage());
         }
     }
 
     private boolean isRobloxRunning() {
         try {
             Process process = Runtime.getRuntime().exec(
-                new String[]{"tasklist", "/FI", "IMAGENAME eq RobloxPlayerBeta.exe", "/NH"}
-            );
+                    new String[] { "tasklist", "/FI", "IMAGENAME eq RobloxPlayerBeta.exe", "/NH" });
             BufferedReader reader = new BufferedReader(
-                new InputStreamReader(process.getInputStream())
-            );
+                    new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.contains("RobloxPlayerBeta.exe")) {
@@ -115,14 +116,17 @@ public class RobloxMonitor implements Runnable {
     private boolean isRivalsInLogs() {
         try {
             String localAppData = System.getenv("LOCALAPPDATA");
-            if (localAppData == null) return false;
+            if (localAppData == null)
+                return false;
 
             File logsDir = new File(localAppData, "Roblox/logs");
-            if (!logsDir.isDirectory()) return false;
+            if (!logsDir.isDirectory())
+                return false;
 
             // Find the most recently modified .log file
             File[] logFiles = logsDir.listFiles((dir, name) -> name.endsWith(".log"));
-            if (logFiles == null || logFiles.length == 0) return false;
+            if (logFiles == null || logFiles.length == 0)
+                return false;
 
             Arrays.sort(logFiles, Comparator.comparingLong(File::lastModified).reversed());
             File latestLog = logFiles[0];
