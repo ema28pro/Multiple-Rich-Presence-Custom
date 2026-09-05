@@ -1,3 +1,17 @@
+# Archivos y carpetas ignoradas
 archive/mics.md
 release.bat
 logs/
+*.log
+
+# Backups y builds temporales
+DiscordPipeSocket-original.jar
+DiscordPipeSocket-linux.jar
+build/
+*.class
+
+# IDEs y OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
