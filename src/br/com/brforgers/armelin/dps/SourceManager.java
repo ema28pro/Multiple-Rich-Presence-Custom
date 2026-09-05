@@ -28,11 +28,17 @@ public class SourceManager {
         public final boolean changed;
         public final DiscordRichPresence presence;
         public final String activeSource;
+        public final JSONObject rpcData;
 
         public UpdateResult(boolean changed, DiscordRichPresence presence, String activeSource) {
+            this(changed, presence, activeSource, null);
+        }
+
+        public UpdateResult(boolean changed, DiscordRichPresence presence, String activeSource, JSONObject rpcData) {
             this.changed = changed;
             this.presence = presence;
             this.activeSource = activeSource;
+            this.rpcData = rpcData;
         }
     }
 
@@ -97,24 +103,24 @@ public class SourceManager {
             if (lastActiveKey != null) {
                 lastActiveKey = null;
                 lastRpcHash = 0;
-                return new UpdateResult(true, null, null);
+                return new UpdateResult(true, null, null, null);
             }
             // If there was never an active source, signal no change
-            return new UpdateResult(false, null, null);
+            return new UpdateResult(false, null, null, null);
         }
 
         // Calculate a hash for the current presence data
         int currentHash = active.rpcData.toString().hashCode();
         // If the active source and its data are the same as before, signal no change
         if (active.source.equals(lastActiveKey) && currentHash == lastRpcHash) {
-            return new UpdateResult(false, null, active.source);
+            return new UpdateResult(false, null, active.source, active.rpcData);
         }
 
         // Update the internal info with the new active source and its data
         lastActiveKey = active.source;
         lastRpcHash = currentHash;
-        // Signal that there was a change, and return the new presence and source name
-        return new UpdateResult(true, buildPresence(active.rpcData), active.source);
+        // Signal that there was a change, and return the new presence, source name, and rpcData
+        return new UpdateResult(true, buildPresence(active.rpcData), active.source, active.rpcData);
     }
 
     private DiscordRichPresence buildPresence(JSONObject rpc) {

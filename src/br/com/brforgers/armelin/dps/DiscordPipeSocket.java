@@ -62,10 +62,15 @@ public class DiscordPipeSocket {
 
         // Initialize Discord RPC once at startup if clientId is configured
         if (!config.clientId.isEmpty()) {
-            lib.Discord_Initialize(config.clientId, handlers, true, "");
-            currentClientId = config.clientId;
-            lastid = config.clientId;
-            System.out.println("[Bridge] Discord initialized with clientId from config.json");
+            boolean ipcOk = DiscordIPC.connect(config.clientId);
+            if (ipcOk) {
+                System.out.println("[Bridge] DiscordIPC initialized with clientId from config.json");
+            } else {
+                lib.Discord_Initialize(config.clientId, handlers, true, "");
+                currentClientId = config.clientId;
+                lastid = config.clientId;
+                System.out.println("[Bridge] Discord initialized (fallback) with clientId from config.json");
+            }
         }
 
         // Scheduled cleanup thread — checks for expired sources every 5 seconds
@@ -78,18 +83,7 @@ public class DiscordPipeSocket {
             try {
                 sourceManager.cleanExpired();
                 SourceManager.UpdateResult result = sourceManager.checkForChanges();
-                if (result.changed) {
-                    if (result.activeSource != null) {
-                        ensureClientId(lib, handlers, result.activeSource, config);
-                    }
-                    lib.Discord_RunCallbacks();
-                    if (result.presence != null) {
-                        lib.Discord_UpdatePresence(result.presence);
-                    } else {
-                        System.out.println("[Bridge] Clearing presence (all sources expired)");
-                        lib.Discord_ClearPresence();
-                    }
-                }
+                applyPresenceUpdate(result, config, lib, handlers);
             } catch (Exception e) {
                 System.err.println("[Bridge] Cleanup error: " + e.getMessage());
             }
@@ -154,18 +148,7 @@ public class DiscordPipeSocket {
                             System.out.println("[Bridge] Removing source: " + source);
                             sourceManager.removeSource(source);
                             SourceManager.UpdateResult result = sourceManager.checkForChanges();
-                            if (result.changed) {
-                                if (result.activeSource != null) {
-                                    ensureClientId(lib, handlers, result.activeSource, config);
-                                }
-                                lib.Discord_RunCallbacks();
-                                if (result.presence != null) {
-                                    lib.Discord_UpdatePresence(result.presence);
-                                } else {
-                                    System.out.println("[Bridge] Clearing presence (source removed)");
-                                    lib.Discord_ClearPresence();
-                                }
-                            }
+                            applyPresenceUpdate(result, config, lib, handlers);
                             return;
                         }
 
@@ -188,45 +171,36 @@ public class DiscordPipeSocket {
                         }
 
                         SourceManager.UpdateResult result = sourceManager.checkForChanges();
-                        if (result.changed) {
-                            if (result.activeSource != null) {
-                                System.out.println("[Bridge] ensureClientId for activeSource=" + result.activeSource);
-                                ensureClientId(lib, handlers, result.activeSource, config);
-                            }
-                            System.out.println("[Bridge] Running Discord callbacks...");
-                            lib.Discord_RunCallbacks();
-                            if (result.presence != null) {
-                                System.out.println("[Bridge] Updating presence -> " + source);
-                                lib.Discord_UpdatePresence(result.presence);
-                            } else {
-                                System.out.println("[Bridge] Clearing presence (all sources expired)");
-                                lib.Discord_ClearPresence();
-                            }
-                        }
+                        applyPresenceUpdate(result, config, lib, handlers);
                         return;
                     }
 
                     // Legacy protocol: {cid, rpc}
-                    if (!jsonObject.getString("cid").equals(DiscordPipeSocket.lastid)) {
-                        if ("".equals(DiscordPipeSocket.lastid)) {
-                            DiscordPipeSocket.lastid = jsonObject.getString("cid");
-                            lib.Discord_Initialize(DiscordPipeSocket.lastid, handlers, true, "");
-                        } else {
-                            lib.Discord_Shutdown();
-                            DiscordPipeSocket.lastid = jsonObject.getString("cid");
-                            lib.Discord_Initialize(DiscordPipeSocket.lastid, handlers, true, "");
+                    String cid = jsonObject.getString("cid");
+                    JSONObject rpcObj = jsonObject.getJSONObject("rpc");
+                    if (DiscordIPC.isConnected() || DiscordIPC.connect(cid)) {
+                        DiscordIPC.updatePresence(rpcObj);
+                    } else {
+                        if (!cid.equals(DiscordPipeSocket.lastid)) {
+                            if ("".equals(DiscordPipeSocket.lastid)) {
+                                DiscordPipeSocket.lastid = cid;
+                                lib.Discord_Initialize(DiscordPipeSocket.lastid, handlers, true, "");
+                            } else {
+                                lib.Discord_Shutdown();
+                                DiscordPipeSocket.lastid = cid;
+                                lib.Discord_Initialize(DiscordPipeSocket.lastid, handlers, true, "");
+                            }
                         }
+                        lib.Discord_RunCallbacks();
+                        DiscordRichPresence discordRichPresence = gson.fromJson(
+                                new String(
+                                        jsonObject.get("rpc").toString().getBytes(StandardCharsets.UTF_8),
+                                        StandardCharsets.UTF_8
+                                ),
+                                DiscordRichPresence.class
+                        );
+                        lib.Discord_UpdatePresence(discordRichPresence);
                     }
-
-                    lib.Discord_RunCallbacks();
-                    DiscordRichPresence discordRichPresence = gson.fromJson(
-                            new String(
-                                    jsonObject.get("rpc").toString().getBytes(StandardCharsets.UTF_8),
-                                    StandardCharsets.UTF_8
-                            ),
-                            DiscordRichPresence.class
-                    );
-                    lib.Discord_UpdatePresence(discordRichPresence);
                 } catch (Exception e) {
                     System.err.println("[Bridge] Error processing message: " + e.getMessage());
                 }
@@ -248,6 +222,7 @@ public class DiscordPipeSocket {
         item2.addActionListener((ex) -> {
             saveBridgeState(sourceManager, robloxMonitor);
             scheduler.shutdown();
+            DiscordIPC.disconnect();
             lib.Discord_Shutdown();
             System.exit(0);
         });
@@ -384,6 +359,36 @@ public class DiscordPipeSocket {
             System.err.println("[Bridge] Error loading state: " + e.getMessage());
         }
         return null;
+    }
+
+    static void applyPresenceUpdate(SourceManager.UpdateResult result, Config config, DiscordRPC lib, DiscordEventHandlers handlers) {
+        if (!result.changed) return;
+
+        if (result.activeSource != null) {
+            DiscordIPC.ensureClientId(result.activeSource, config);
+            if (!DiscordIPC.isConnected()) {
+                ensureClientId(lib, handlers, result.activeSource, config);
+            }
+        }
+
+        if (DiscordIPC.isConnected()) {
+            if (result.rpcData != null) {
+                System.out.println("[Bridge] Updating presence via DiscordIPC -> " + result.activeSource);
+                DiscordIPC.updatePresence(result.rpcData);
+            } else {
+                System.out.println("[Bridge] Clearing presence via DiscordIPC (all sources expired/removed)");
+                DiscordIPC.clearPresence();
+            }
+        } else {
+            lib.Discord_RunCallbacks();
+            if (result.presence != null) {
+                System.out.println("[Bridge] Updating presence via Minnced fallback -> " + result.activeSource);
+                lib.Discord_UpdatePresence(result.presence);
+            } else {
+                System.out.println("[Bridge] Clearing presence via Minnced fallback (all sources expired)");
+                lib.Discord_ClearPresence();
+            }
+        }
     }
 
     static void ensureClientId(DiscordRPC lib, DiscordEventHandlers handlers, String source, Config config) {

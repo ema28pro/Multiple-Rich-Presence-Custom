@@ -133,6 +133,67 @@
             flex: 1;
         }
 
+        /* Activity Type Selector */
+        .activity-type-selector {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            margin-bottom: 6px;
+        }
+
+        .activity-type-btn {
+            flex: 1;
+            cursor: pointer;
+        }
+
+        .activity-type-btn input {
+            display: none;
+        }
+
+        .activity-type-btn span {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 9px 8px;
+            background: #0f3460;
+            border: 1px solid #2a4a7f;
+            border-radius: 6px;
+            color: #b9bbbe;
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            text-align: center;
+            user-select: none;
+        }
+
+        .activity-type-btn:hover span {
+            background: #144272;
+            color: #ffffff;
+            border-color: #3b629b;
+        }
+
+        .activity-type-btn input:checked + span {
+            background: #7289da;
+            color: #ffffff;
+            border-color: #8ea1e1;
+            box-shadow: 0 0 10px rgba(114, 137, 218, 0.4);
+        }
+
+        /* Buttons Config Section */
+        .button-card {
+            background: rgba(15, 52, 96, 0.35);
+            border: 1px solid #2a4a7f;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 12px;
+        }
+
+        .button-fields {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #2a4a7f;
+        }
+
         .checkbox-group {
             display: flex;
             align-items: center;
@@ -152,7 +213,7 @@
             color: #b9bbbe;
             cursor: pointer;
             text-transform: none;
-            font-weight: 400;
+            font-weight: 500;
         }
 
         .separator {
@@ -248,7 +309,14 @@
         .discord-card-body {
             padding: 14px;
             display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .dc-main {
+            display: flex;
             gap: 14px;
+            width: 100%;
         }
 
         .dc-images {
@@ -307,6 +375,46 @@
             color: #72767d;
         }
 
+        /* Discord Preview Buttons */
+        .dc-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        .dc-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            background: #4f545c;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 7px 12px;
+            border-radius: 4px;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background 0.15s ease, transform 0.1s ease;
+            cursor: pointer;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        .dc-btn:hover {
+            background: #5d6269;
+        }
+
+        .dc-btn svg {
+            width: 13px;
+            height: 13px;
+            fill: currentColor;
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+
         .dc-empty {
             color: #555;
             font-style: italic;
@@ -346,7 +454,7 @@
     <div class="container">
         <div class="form-panel">
             <h1>Custom Discord Status</h1>
-            <p class="subtitle">Configure your custom Rich Presence and send it to the bridge</p>
+            <p class="subtitle">Configura tu estado personalizado de Discord y conéctalo al bridge</p>
 
             <div id="connStatus" class="connection-status disconnected">
                 <span class="dot"></span>
@@ -355,20 +463,39 @@
 
             <hr class="separator">
 
+            <!-- Activity Type Selector -->
             <div class="form-group">
-                <label>Details (Line 1)</label>
+                <label>Tipo de Actividad / Activity Type</label>
+                <div class="activity-type-selector">
+                    <label class="activity-type-btn">
+                        <input type="radio" name="activityType" value="playing" checked>
+                        <span>🎮 Playing</span>
+                    </label>
+                    <label class="activity-type-btn">
+                        <input type="radio" name="activityType" value="listening">
+                        <span>🎧 Listening</span>
+                    </label>
+                    <label class="activity-type-btn">
+                        <input type="radio" name="activityType" value="watching">
+                        <span>📺 Watching</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Details (Línea 1)</label>
                 <input type="text" id="rpcDetails" placeholder="Playing something cool..." maxlength="128">
             </div>
             <div class="form-group">
-                <label>State (Line 2)</label>
+                <label>State (Línea 2)</label>
                 <input type="text" id="rpcState" placeholder="Having fun" maxlength="128">
             </div>
 
             <hr class="separator">
 
-            <div class="section-title">Images</div>
+            <div class="section-title">Imágenes</div>
             <div class="form-group">
-                <label>Large Image URL</label>
+                <label>Large Image URL / Asset Key</label>
                 <input type="url" id="rpcLargeImg" placeholder="https://example.com/image.png">
             </div>
             <div class="form-group">
@@ -377,7 +504,7 @@
             </div>
             <div class="form-row">
                 <div class="form-group">
-                    <label>Small Image URL</label>
+                    <label>Small Image URL / Asset Key</label>
                     <input type="url" id="rpcSmallImg" placeholder="https://...">
                 </div>
                 <div class="form-group">
@@ -390,11 +517,52 @@
 
             <div class="checkbox-group">
                 <input type="checkbox" id="rpcTimer">
-                <label for="rpcTimer">Show elapsed time</label>
+                <label for="rpcTimer">Mostrar tiempo transcurrido (Elapsed time)</label>
             </div>
             <div class="form-group" id="timerInputGroup" style="display:none">
-                <label>Start time (HH:MM:SS)</label>
+                <label>Tiempo inicial (HH:MM:SS)</label>
                 <input type="text" id="rpcTimerValue" placeholder="00:00:00" maxlength="8">
+            </div>
+
+            <hr class="separator">
+
+            <!-- Optional Buttons Section -->
+            <div class="section-title">Botones (Opcional)</div>
+
+            <!-- Button 1 -->
+            <div class="button-card">
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                    <input type="checkbox" id="rpcBtn1Enable">
+                    <label for="rpcBtn1Enable">Habilitar Botón 1</label>
+                </div>
+                <div id="btn1Group" class="button-fields" style="display:none;">
+                    <div class="form-group">
+                        <label>Texto del Botón 1</label>
+                        <input type="text" id="rpcBtn1Text" placeholder="Ej: Visitar Web / Visit Website" maxlength="32">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Enlace URL (Link)</label>
+                        <input type="url" id="rpcBtn1Url" placeholder="https://ejemplo.com" maxlength="512">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Button 2 -->
+            <div class="button-card">
+                <div class="checkbox-group" style="margin-bottom: 0;">
+                    <input type="checkbox" id="rpcBtn2Enable">
+                    <label for="rpcBtn2Enable">Habilitar Botón 2</label>
+                </div>
+                <div id="btn2Group" class="button-fields" style="display:none;">
+                    <div class="form-group">
+                        <label>Texto del Botón 2</label>
+                        <input type="text" id="rpcBtn2Text" placeholder="Ej: Únete a mi Discord" maxlength="32">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>Enlace URL (Link)</label>
+                        <input type="url" id="rpcBtn2Url" placeholder="https://discord.gg/ejemplo" maxlength="512">
+                    </div>
+                </div>
             </div>
 
             <hr class="separator">
@@ -409,7 +577,7 @@
         <div class="preview-panel">
             <h2>Preview</h2>
             <div class="discord-card">
-                <div class="discord-card-header">Playing a Game</div>
+                <div class="discord-card-header" id="cardHeader">PLAYING A GAME</div>
                 <div id="previewContent">
                     <div class="dc-empty">Configure your status and press Activate</div>
                 </div>
@@ -428,11 +596,20 @@
             timer: document.getElementById("rpcTimer"),
             timerValue: document.getElementById("rpcTimerValue"),
             timerInputGroup: document.getElementById("timerInputGroup"),
+            btn1Enable: document.getElementById("rpcBtn1Enable"),
+            btn1Group: document.getElementById("btn1Group"),
+            btn1Text: document.getElementById("rpcBtn1Text"),
+            btn1Url: document.getElementById("rpcBtn1Url"),
+            btn2Enable: document.getElementById("rpcBtn2Enable"),
+            btn2Group: document.getElementById("btn2Group"),
+            btn2Text: document.getElementById("rpcBtn2Text"),
+            btn2Url: document.getElementById("rpcBtn2Url"),
             activate: document.getElementById("btnActivate"),
             deactivate: document.getElementById("btnDeactivate"),
             save: document.getElementById("btnSave"),
             connStatus: document.getElementById("connStatus"),
             connText: document.getElementById("connText"),
+            cardHeader: document.getElementById("cardHeader"),
             preview: document.getElementById("previewContent"),
         };
 
@@ -440,14 +617,48 @@
         let startTime = null;
         let socket = null;
 
+        // ---- Activity Type Helpers ----
+        function getActivityType() {
+            const checked = document.querySelector('input[name="activityType"]:checked');
+            return checked ? checked.value : "playing";
+        }
+
+        function setActivityType(type) {
+            const radio = document.querySelector(`input[name="activityType"][value="${type}"]`);
+            if (radio) {
+                radio.checked = true;
+            }
+        }
+
+        // ---- Button Toggles ----
+        els.btn1Enable.addEventListener("change", () => {
+            els.btn1Group.style.display = els.btn1Enable.checked ? "" : "none";
+            if (active) sendRPC();
+            updatePreview();
+        });
+
+        els.btn2Enable.addEventListener("change", () => {
+            els.btn2Group.style.display = els.btn2Enable.checked ? "" : "none";
+            if (active) sendRPC();
+            updatePreview();
+        });
+
+        // ---- Activity Radios change ----
+        document.querySelectorAll('input[name="activityType"]').forEach(r => {
+            r.addEventListener("change", () => {
+                if (active) sendRPC();
+                updatePreview();
+            });
+        });
+
         // ---- Timer checkbox toggle ----
         els.timer.addEventListener("change", () => {
             els.timerInputGroup.style.display = els.timer.checked ? "" : "none";
-            // If unchecked, clear startTime immediately
             if (!els.timer.checked) {
                 startTime = null;
             }
             if (active) sendRPC();
+            updatePreview();
         });
 
         function parseTimeInput(val) {
@@ -486,12 +697,35 @@
                         if (data.active && data.persistent) {
                             active = true;
                             if (data.rpc) {
+                                if (data.rpc.activityType) {
+                                    setActivityType(data.rpc.activityType);
+                                } else if (typeof data.rpc.type === "number") {
+                                    const revMap = { 0: "playing", 2: "listening", 3: "watching" };
+                                    if (revMap[data.rpc.type]) setActivityType(revMap[data.rpc.type]);
+                                }
+
                                 if (data.rpc.details) els.details.value = data.rpc.details;
                                 if (data.rpc.state) els.state.value = data.rpc.state;
                                 if (data.rpc.largeImageKey) els.largeImg.value = data.rpc.largeImageKey;
                                 if (data.rpc.largeImageText) els.largeText.value = data.rpc.largeImageText;
                                 if (data.rpc.smallImageKey) els.smallImg.value = data.rpc.smallImageKey;
                                 if (data.rpc.smallImageText) els.smallText.value = data.rpc.smallImageText;
+
+                                if (Array.isArray(data.rpc.buttons)) {
+                                    if (data.rpc.buttons[0]) {
+                                        els.btn1Enable.checked = true;
+                                        els.btn1Group.style.display = "";
+                                        els.btn1Text.value = data.rpc.buttons[0].label || "";
+                                        els.btn1Url.value = data.rpc.buttons[0].url || "";
+                                    }
+                                    if (data.rpc.buttons[1]) {
+                                        els.btn2Enable.checked = true;
+                                        els.btn2Group.style.display = "";
+                                        els.btn2Text.value = data.rpc.buttons[1].label || "";
+                                        els.btn2Url.value = data.rpc.buttons[1].url || "";
+                                    }
+                                }
+
                                 if (data.rpc.startTimestamp) {
                                     startTime = typeof data.rpc.startTimestamp === "number"
                                         ? (data.rpc.startTimestamp < 1e12
@@ -502,7 +736,6 @@
                                     els.timerInputGroup.style.display = "";
                                     els.timerValue.value = msToTimeInput(Date.now() - startTime);
                                 } else {
-                                    // The bridge has no timestamp → ensure timer is off
                                     startTime = null;
                                     els.timer.checked = false;
                                     els.timerInputGroup.style.display = "none";
@@ -542,6 +775,11 @@
         function buildPayload() {
             const rpc = {};
 
+            const actType = getActivityType();
+            const typeMap = { playing: 0, listening: 2, watching: 3 };
+            rpc.type = typeMap[actType] !== undefined ? typeMap[actType] : 0;
+            rpc.activityType = actType;
+
             const details = els.details.value.trim();
             const state = els.state.value.trim();
             if (details) rpc.details = details;
@@ -557,9 +795,7 @@
             if (smallImg) rpc.smallImageKey = smallImg;
             if (smallText) rpc.smallImageText = smallText;
 
-            // ── FIX: always set startTimestamp explicitly ──────────
-            // // If checkbox is NOT checked → null (bridge removes it)
-            // // If checked → calculate from input
+            // Timer / Timestamps
             if (els.timer.checked) {
                 if (!startTime) {
                     const customMs = parseTimeInput(els.timerValue.value);
@@ -567,8 +803,28 @@
                 }
                 rpc.startTimestamp = startTime;
             } else {
-                rpc.startTimestamp = null; // explícito: quitar timestamp del bridge
+                rpc.startTimestamp = null;
                 startTime = null;
+            }
+
+            // Buttons
+            const buttons = [];
+            if (els.btn1Enable.checked) {
+                const label = els.btn1Text.value.trim();
+                const url = els.btn1Url.value.trim();
+                if (label) {
+                    buttons.push({ label, url: url || "https://discord.com" });
+                }
+            }
+            if (els.btn2Enable.checked) {
+                const label = els.btn2Text.value.trim();
+                const url = els.btn2Url.value.trim();
+                if (label) {
+                    buttons.push({ label, url: url || "https://discord.com" });
+                }
+            }
+            if (buttons.length > 0) {
+                rpc.buttons = buttons;
             }
 
             return { source: "custom", priority: 4, persistent: true, rpc };
@@ -592,7 +848,6 @@
         // ---- Activate / Deactivate ----
         els.activate.addEventListener("click", () => {
             active = true;
-            // Calculate startTime only if the timer is checked
             if (els.timer.checked) {
                 const customMs = parseTimeInput(els.timerValue.value);
                 startTime = Date.now() - customMs;
@@ -620,6 +875,7 @@
         function getConfig() {
             return {
                 active: active,
+                activityType: getActivityType(),
                 details: els.details.value,
                 state: els.state.value,
                 largeImg: els.largeImg.value,
@@ -628,11 +884,18 @@
                 smallText: els.smallText.value,
                 timer: els.timer.checked,
                 timerValue: els.timerValue.value,
+                btn1Enable: els.btn1Enable.checked,
+                btn1Text: els.btn1Text.value,
+                btn1Url: els.btn1Url.value,
+                btn2Enable: els.btn2Enable.checked,
+                btn2Text: els.btn2Text.value,
+                btn2Url: els.btn2Url.value,
             };
         }
 
         function loadConfig(cfg) {
             if (!cfg) return;
+            if (cfg.activityType) setActivityType(cfg.activityType);
             els.details.value = cfg.details || "";
             els.state.value = cfg.state || "";
             els.largeImg.value = cfg.largeImg || "";
@@ -642,7 +905,17 @@
             els.timer.checked = !!cfg.timer;
             els.timerValue.value = cfg.timerValue || "00:00:00";
             els.timerInputGroup.style.display = cfg.timer ? "" : "none";
-            // Clear startTime on load — it will be recalculated on activate
+
+            els.btn1Enable.checked = !!cfg.btn1Enable;
+            els.btn1Text.value = cfg.btn1Text || "";
+            els.btn1Url.value = cfg.btn1Url || "";
+            els.btn1Group.style.display = cfg.btn1Enable ? "" : "none";
+
+            els.btn2Enable.checked = !!cfg.btn2Enable;
+            els.btn2Text.value = cfg.btn2Text || "";
+            els.btn2Url.value = cfg.btn2Url || "";
+            els.btn2Group.style.display = cfg.btn2Enable ? "" : "none";
+
             startTime = null;
         }
 
@@ -659,6 +932,14 @@
 
         // ---- Live Preview ----
         function updatePreview() {
+            const actType = getActivityType();
+            const headerTitles = {
+                playing: "PLAYING A GAME",
+                listening: "LISTENING TO",
+                watching: "WATCHING"
+            };
+            els.cardHeader.textContent = headerTitles[actType] || "PLAYING A GAME";
+
             if (!active) {
                 els.preview.innerHTML = '<div class="dc-empty">Configure your status and press Activate</div>';
                 return;
@@ -672,7 +953,23 @@
             const smallText = els.smallText.value.trim();
             const showTimer = els.timer.checked;
 
+            // Buttons for preview
+            const previewButtons = [];
+            if (els.btn1Enable.checked) {
+                previewButtons.push({
+                    label: els.btn1Text.value.trim() || "Button 1",
+                    url: els.btn1Url.value.trim()
+                });
+            }
+            if (els.btn2Enable.checked) {
+                previewButtons.push({
+                    label: els.btn2Text.value.trim() || "Button 2",
+                    url: els.btn2Url.value.trim()
+                });
+            }
+
             let html = '<div class="discord-card-body">';
+            html += '<div class="dc-main">';
 
             if (largeImg) {
                 html += '<div class="dc-images">';
@@ -691,7 +988,25 @@
                 const elapsed = formatElapsed(Date.now() - startTime);
                 html += `<div class="dc-time">${elapsed} elapsed</div>`;
             }
-            html += '</div></div>';
+            html += '</div></div>'; // .dc-info and .dc-main
+
+            // Render buttons in preview if any enabled
+            if (previewButtons.length > 0) {
+                html += '<div class="dc-buttons">';
+                previewButtons.forEach(btn => {
+                    const hasValidUrl = btn.url && (btn.url.startsWith("http://") || btn.url.startsWith("https://"));
+                    const targetAttr = hasValidUrl ? 'target="_blank" rel="noopener noreferrer"' : 'onclick="return false;"';
+                    const hrefAttr = hasValidUrl ? `href="${escapeHtml(btn.url)}"` : 'href="#"';
+                    html += `
+                        <a class="dc-btn" ${hrefAttr} ${targetAttr}>
+                            <span>${escapeHtml(btn.label)}</span>
+                            <svg viewBox="0 0 24 24"><path d="M10 5V3H5.75C4.23122 3 3 4.23122 3 5.75V18.25C3 19.7688 4.23122 21 5.75 21H18.25C19.7688 21 21 19.7688 21 18.25V14H19V18.25C19 18.6642 18.6642 19 18.25 19H5.75C5.33579 19 5 18.6642 5 18.25V5.75C5 5.33579 5.33579 5 5.75 5H10ZM14 3V5H17.59L8.29 14.29L9.71 15.71L19 6.41V10H21V3H14Z"/></svg>
+                        </a>`;
+                });
+                html += '</div>';
+            }
+
+            html += '</div>'; // .discord-card-body
 
             els.preview.innerHTML = html;
         }
@@ -711,13 +1026,24 @@
             return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
         }
 
-        const allInputs = document.querySelectorAll("input");
-        allInputs.forEach(inp => {
-            inp.addEventListener("input", () => { if (active) { sendRPC(); updatePreview(); } });
-            inp.addEventListener("change", () => { if (active) { sendRPC(); updatePreview(); } });
+        // Listen for all input/change events to update live
+        document.addEventListener("input", (e) => {
+            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) {
+                if (active) sendRPC();
+                updatePreview();
+            }
         });
 
+        document.addEventListener("change", (e) => {
+            if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "SELECT")) {
+                if (active) sendRPC();
+                updatePreview();
+            }
+        });
+
+        // Live preview timer tick
         setInterval(() => { if (active) updatePreview(); }, 1000);
+        updatePreview();
     </script>
 </body>
 

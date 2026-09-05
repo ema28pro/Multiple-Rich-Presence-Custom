@@ -23,6 +23,7 @@ mkdir build
 echo [1/3] Compiling Java sources...
 javac -cp "DiscordPipeSocket.jar" -d "build" --release 8 ^
     src\br\com\brforgers\armelin\dps\Config.java ^
+    src\br\com\brforgers\armelin\dps\DiscordIPC.java ^
     src\br\com\brforgers\armelin\dps\SourceManager.java ^
     src\br\com\brforgers\armelin\dps\RobloxMonitor.java ^
     src\br\com\brforgers\armelin\dps\DiscordPipeSocket.java
