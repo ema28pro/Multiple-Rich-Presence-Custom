@@ -2,6 +2,7 @@ package br.com.brforgers.armelin.dps;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileWriter;
 import java.nio.charset.StandardCharsets;
 import org.json.JSONObject;
 
@@ -45,7 +46,19 @@ public class Config {
             File configFile = new File(jarDir, "config.json");
 
             if (!configFile.exists()) {
-                System.out.println("[Config] config.json not found next to JAR, using defaults.");
+                System.out.println("[Config] config.json not found next to JAR. Creating default config.json...");
+                try {
+                    JSONObject defJson = new JSONObject();
+                    defJson.put("clientId", defaultClientId);
+                    defJson.put("wsPort", defaultPort);
+                    defJson.put("logFile", "logs/dps.log");
+                    FileWriter fw = new FileWriter(configFile);
+                    fw.write(defJson.toString(2));
+                    fw.close();
+                    System.out.println("[Config] Created default config.json at: " + configFile.getAbsolutePath());
+                } catch (Exception ex) {
+                    System.out.println("[Config] Note: Could not write default config.json: " + ex.getMessage());
+                }
                 return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId,
                         defaultClientId, defaultPort, defaultTimeout, "logs/dps.log");
             }

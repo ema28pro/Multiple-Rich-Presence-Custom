@@ -570,6 +570,7 @@
             flex-shrink: 0;
             width: 68px;
             height: 68px;
+            display: inline-block;
         }
 
         .dc-large-img {
@@ -577,6 +578,7 @@
             height: 68px;
             border-radius: 10px;
             object-fit: cover;
+            display: block;
             background: #1e1f22;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
         }
@@ -588,9 +590,27 @@
             object-fit: cover;
             background: #1e1f22;
             border: 3px solid var(--dc-card-bg);
-            position: absolute;
-            bottom: -5px;
-            right: -5px;
+            position: absolute !important;
+            bottom: -4px !important;
+            right: -4px !important;
+            z-index: 2;
+            display: block;
+        }
+
+        .dc-small-img-link {
+            position: absolute !important;
+            bottom: -4px !important;
+            right: -4px !important;
+            width: 24px;
+            height: 24px;
+            z-index: 2;
+            display: block;
+        }
+
+        .dc-small-img-link .dc-small-img {
+            position: static !important;
+            width: 100%;
+            height: 100%;
         }
 
         .dc-info {
@@ -840,7 +860,7 @@
         }
 
         /* Tooltips */
-        .img-tooltip {
+        .img-tooltip:not(.dc-small-img) {
             position: relative;
         }
 

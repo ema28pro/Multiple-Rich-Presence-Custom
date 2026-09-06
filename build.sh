@@ -34,6 +34,7 @@ fi
 
 cp -f "DiscordPipeSocket-linux.jar" "DiscordCustomRPC-linux.jar"
 jar ufe "DiscordCustomRPC-linux.jar" br.com.brforgers.armelin.dps.CustomPipeSocket -C build br/com/brforgers/armelin/dps/
+jar uf "DiscordCustomRPC-linux.jar" custom-status/index.html custom-status/app.js custom-status/style.css
 if [ $? -ne 0 ]; then
     echo "ERROR: Failed to create DiscordCustomRPC-linux.jar."
     exit 1

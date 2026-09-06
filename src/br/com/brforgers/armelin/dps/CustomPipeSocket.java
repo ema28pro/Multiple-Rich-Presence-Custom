@@ -73,6 +73,9 @@ public class CustomPipeSocket {
             DiscordIPC.updatePresence(currentRpc);
         }
 
+        // Ensure custom-status UI files are present or extracted at startup
+        ensureHtmlFile();
+
         // WebSocket Server for custom-status frontend
         WebSocketServer server = new WebSocketServer(new InetSocketAddress("localhost", port)) {
             @Override
@@ -124,6 +127,20 @@ public class CustomPipeSocket {
                         resp.put("type", "presenceUpdateResult");
                         resp.put("success", cleared);
                         resp.put("clientId", DiscordIPC.getCurrentClientId());
+                        conn.send(resp.toString());
+                        return;
+                    }
+
+                    // 2.5 Save Draft Configuration without activating
+                    if (json.has("action") && "save".equals(json.getString("action"))) {
+                        if (json.has("rpc")) {
+                            currentRpc = json.getJSONObject("rpc");
+                            saveState();
+                            logger.info("[CustomBridge] Draft configuration saved to bridge-state.json (active=" + active + ")");
+                        }
+                        JSONObject resp = new JSONObject();
+                        resp.put("type", "saveResult");
+                        resp.put("success", true);
                         conn.send(resp.toString());
                         return;
                     }
@@ -237,9 +254,9 @@ public class CustomPipeSocket {
 
     private static void openCustomStatusInBrowser() {
         try {
-            File htmlFile = new File("custom-status/index.html").getAbsoluteFile();
-            if (!htmlFile.exists()) {
-                logger.severe("[CustomBridge] custom-status/index.html not found at: " + htmlFile.getPath());
+            File htmlFile = ensureHtmlFile();
+            if (htmlFile == null || !htmlFile.exists()) {
+                logger.severe("[CustomBridge] custom-status/index.html could not be located or extracted.");
                 return;
             }
             String url = htmlFile.toURI().toString();
@@ -254,6 +271,62 @@ public class CustomPipeSocket {
             }
         } catch (Exception ex) {
             logger.severe("[CustomBridge] Could not open browser: " + ex.getMessage());
+        }
+    }
+
+    private static File ensureHtmlFile() {
+        // 1. Look next to the running JAR
+        File jarHtml = new File(getJarDir(), "custom-status/index.html");
+        if (jarHtml.exists()) {
+            return jarHtml;
+        }
+
+        // 2. Look in the current working directory
+        File cwdHtml = new File("custom-status/index.html").getAbsoluteFile();
+        if (cwdHtml.exists()) {
+            return cwdHtml;
+        }
+
+        // 3. Fallback: extract embedded files from the JAR
+        try {
+            File targetDir = new File(getJarDir(), "custom-status");
+            if (!targetDir.exists() && !targetDir.mkdirs()) {
+                // If directory next to JAR is not writable, fallback to system temp folder
+                targetDir = new File(System.getProperty("java.io.tmpdir"), "discord-custom-status");
+                targetDir.mkdirs();
+            }
+
+            extractResource("/custom-status/index.html", new File(targetDir, "index.html"));
+            extractResource("/custom-status/app.js", new File(targetDir, "app.js"));
+            extractResource("/custom-status/style.css", new File(targetDir, "style.css"));
+
+            File extractedIndex = new File(targetDir, "index.html");
+            if (extractedIndex.exists()) {
+                logger.info("[CustomBridge] Extracted embedded UI to: " + extractedIndex.getAbsolutePath());
+                return extractedIndex;
+            }
+        } catch (Exception e) {
+            logger.warning("[CustomBridge] Error extracting embedded UI: " + e.getMessage());
+        }
+
+        return null;
+    }
+
+    private static void extractResource(String resourcePath, File destination) {
+        try (java.io.InputStream in = CustomPipeSocket.class.getResourceAsStream(resourcePath)) {
+            if (in == null) {
+                logger.warning("[CustomBridge] Embedded resource not found in JAR: " + resourcePath);
+                return;
+            }
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(destination)) {
+                byte[] buffer = new byte[8192];
+                int len;
+                while ((len = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, len);
+                }
+            }
+        } catch (Exception e) {
+            logger.warning("[CustomBridge] Failed to extract " + resourcePath + ": " + e.getMessage());
         }
     }
 

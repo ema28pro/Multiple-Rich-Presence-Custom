@@ -52,9 +52,10 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-:: Build/update custom-only JAR with CustomPipeSocket entrypoint
+:: Build/update custom-only JAR with CustomPipeSocket entrypoint and embedded UI
 copy /y "DiscordPipeSocket.jar" "DiscordCustomRPC.jar" >nul
 jar ufe "DiscordCustomRPC.jar" br.com.brforgers.armelin.dps.CustomPipeSocket -C build br/com/brforgers/armelin/dps/
+jar uf "DiscordCustomRPC.jar" custom-status/index.html custom-status/app.js custom-status/style.css
 if %errorlevel% neq 0 (
     echo ERROR: Failed to create DiscordCustomRPC.jar.
     pause

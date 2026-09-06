@@ -775,6 +775,9 @@
                         } else {
                             active = false;
                             syncButtonState(false);
+                            if (data.rpc && !localStorage.getItem("customRpcFullConfig")) {
+                                loadFromRpcObject(data.rpc);
+                            }
                             updatePreview();
                         }
                     }
@@ -824,10 +827,19 @@
             } catch (e) { }
         }
 
+        let autoSaveTimer = null;
+        function autoSaveConfig() {
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                saveConfig();
+            }, 350);
+        }
+
         function onFormChange() {
             if (active) {
                 sendRPC();
             }
+            autoSaveConfig();
             updatePreview();
         }
 
@@ -916,7 +928,14 @@
 
         function saveConfig() {
             try {
-                localStorage.setItem("customRpcFullConfig", JSON.stringify(getConfig()));
+                const cfg = getConfig();
+                localStorage.setItem("customRpcFullConfig", JSON.stringify(cfg));
+                try {
+                    const payload = buildPayload();
+                    if (payload && payload.rpc) {
+                        localStorage.setItem("customRpcDraftRpc", JSON.stringify(payload.rpc));
+                    }
+                } catch (err) { }
             } catch (e) { }
         }
 
@@ -1142,9 +1161,23 @@
 
         function handleSaveClick(btn) {
             saveConfig();
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                try {
+                    const payload = buildPayload();
+                    if (payload && payload.rpc) {
+                        socket.send(JSON.stringify({ action: "save", source: "custom", rpc: payload.rpc }));
+                    }
+                } catch (e) { }
+            }
             const prev = btn.textContent;
             btn.textContent = "Guardado";
-            setTimeout(() => { btn.textContent = prev; }, 1400);
+            btn.style.borderColor = "var(--success)";
+            btn.style.color = "var(--success)";
+            setTimeout(() => {
+                btn.textContent = prev;
+                btn.style.borderColor = "";
+                btn.style.color = "";
+            }, 1400);
         }
 
         els.save.addEventListener("click", () => handleSaveClick(els.save));
@@ -1241,7 +1274,8 @@
             // Image block
             if (largeImg) {
                 html += '<div class="dc-images">';
-                const largeImgTag = `<img class="dc-large-img img-tooltip" src="${escapeHtml(largeImg)}" data-tooltip="${escapeHtml(largeText)}" onerror="this.style.display='none'" alt="">`;
+                const largeTitle = largeText ? ` title="${escapeHtml(largeText)}"` : "";
+                const largeImgTag = `<img class="dc-large-img" src="${escapeHtml(largeImg)}"${largeTitle} onerror="this.style.display='none'" alt="">`;
                 if (largeUrl) {
                     html += `<a href="${escapeHtml(largeUrl)}" target="_blank" rel="noopener">${largeImgTag}</a>`;
                 } else {
@@ -1249,9 +1283,10 @@
                 }
 
                 if (smallImg) {
-                    const smallImgTag = `<img class="dc-small-img img-tooltip" src="${escapeHtml(smallImg)}" data-tooltip="${escapeHtml(smallText)}" onerror="this.style.display='none'" alt="">`;
+                    const smallTitle = smallText ? ` title="${escapeHtml(smallText)}"` : "";
+                    const smallImgTag = `<img class="dc-small-img" src="${escapeHtml(smallImg)}"${smallTitle} onerror="this.style.display='none'" alt="">`;
                     if (smallUrl) {
-                        html += `<a href="${escapeHtml(smallUrl)}" target="_blank" rel="noopener">${smallImgTag}</a>`;
+                        html += `<a class="dc-small-img-link" href="${escapeHtml(smallUrl)}" target="_blank" rel="noopener">${smallImgTag}</a>`;
                     } else {
                         html += smallImgTag;
                     }
@@ -1396,10 +1431,48 @@
             }
         } catch (e) { }
 
+        // Targeted live timer tick (updates ONLY timer numbers without rebuilding innerHTML so GIFs never restart)
+        function updateTimersTick() {
+            if (!active) return;
+            const payload = buildPayload();
+            const rpc = payload ? payload.rpc : null;
+            if (!rpc) return;
+
+            // 1. Music timeline progress bar
+            const musicTimeline = els.preview.querySelector(".dc-music-timeline");
+            if (musicTimeline && rpc.start && rpc.end) {
+                const startMs = rpc.start * 1000;
+                const endMs = rpc.end * 1000;
+                const totalDuration = Math.max(1, endMs - startMs);
+                const currentPos = Math.max(0, Math.min(totalDuration, Date.now() - startMs));
+                const percent = Math.min(100, Math.max(0, (currentPos / totalDuration) * 100));
+
+                const curTimeEl = musicTimeline.querySelector(".dc-music-time:first-child");
+                const progEl = musicTimeline.querySelector(".dc-music-progress");
+                const thumbEl = musicTimeline.querySelector(".dc-music-thumb");
+                if (curTimeEl) curTimeEl.textContent = formatTimer(currentPos);
+                if (progEl) progEl.style.width = `${percent.toFixed(1)}%`;
+                if (thumbEl) thumbEl.style.left = `${percent.toFixed(1)}%`;
+                return;
+            }
+
+            // 2. Elapsed / Remaining time
+            const timeEl = els.preview.querySelector(".dc-time");
+            if (timeEl) {
+                if (rpc.end) {
+                    const remaining = Math.max(0, (rpc.end * 1000) - Date.now());
+                    timeEl.textContent = `${formatTimer(remaining)} remaining`;
+                } else if (rpc.start) {
+                    const elapsed = Math.max(0, Date.now() - (rpc.start * 1000));
+                    timeEl.textContent = `${formatTimer(elapsed)} elapsed`;
+                }
+            }
+        }
+
         // Initial preview render & live timer tick
         updatePreview();
         setInterval(() => {
             if (active && (els.startEnable.checked || els.endEnable.checked || (els.musicBarEnable && els.musicBarEnable.checked))) {
-                updatePreview();
+                updateTimersTick();
             }
         }, 1000);
