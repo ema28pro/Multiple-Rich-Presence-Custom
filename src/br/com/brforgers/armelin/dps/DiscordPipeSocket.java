@@ -374,9 +374,26 @@ public class DiscordPipeSocket {
         }
     }
 
+    static File getStateFile() {
+        File jarDir = getJarDir();
+        File customDir = new File(jarDir, "custom-status");
+        File stateInCustom = new File(customDir, "bridge-state.json");
+        if (stateInCustom.exists()) {
+            return stateInCustom;
+        }
+        File stateInRoot = new File(jarDir, "bridge-state.json");
+        if (stateInRoot.exists()) {
+            return stateInRoot;
+        }
+        if (customDir.exists()) {
+            return stateInCustom;
+        }
+        return stateInRoot;
+    }
+
     static void saveBridgeState(SourceManager sm, RobloxMonitor rm) {
         try {
-            File stateFile = new File(getJarDir(), "bridge-state.json");
+            File stateFile = getStateFile();
             JSONObject state = new JSONObject();
 
             // Custom status
@@ -398,7 +415,7 @@ public class DiscordPipeSocket {
             writer.write(state.toString(2));
             writer.close();
             logger.info(
-                    "[Bridge] State saved (custom: " + (custom != null) + ", robloxMonitor: " + rm.isEnabled() + ")");
+                    "[Bridge] State saved to " + stateFile.getName() + " (custom: " + (custom != null) + ", robloxMonitor: " + rm.isEnabled() + ")");
         } catch (Exception e) {
             logger.severe("[Bridge] Error saving state: " + e.getMessage());
         }
@@ -406,15 +423,14 @@ public class DiscordPipeSocket {
 
     static JSONObject loadBridgeState(SourceManager sm) {
         try {
-            // Try new format first
-            File stateFile = new File(getJarDir(), "bridge-state.json");
+            File stateFile = getStateFile();
 
             // Migrate from old custom-state.json if it exists
             if (!stateFile.exists()) {
                 File oldFile = new File(getJarDir(), "custom-state.json");
                 if (oldFile.exists()) {
                     oldFile.renameTo(stateFile);
-                    logger.info("[Bridge] Migrated custom-state.json -> bridge-state.json");
+                    logger.info("[Bridge] Migrated custom-state.json -> " + stateFile.getName());
                 }
             }
 

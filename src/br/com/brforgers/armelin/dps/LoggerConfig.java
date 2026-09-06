@@ -21,6 +21,15 @@ public class LoggerConfig {
             }
 
             File logFile = new File(logFilePath);
+            try {
+                if (!logFile.isAbsolute()) {
+                    File jarDir = new File(LoggerConfig.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
+                    if (jarDir != null) {
+                        logFile = new File(jarDir, logFilePath);
+                    }
+                }
+            } catch (Exception ignored) {}
+
             File parentDir = logFile.getParentFile();
             if (parentDir != null && !parentDir.exists()) {
                 parentDir.mkdirs();
@@ -37,7 +46,7 @@ public class LoggerConfig {
                 }
             };
 
-            FileHandler fileHandler = new FileHandler(logFilePath, true);
+            FileHandler fileHandler = new FileHandler(logFile.getPath(), true);
             fileHandler.setFormatter(customFormatter);
             rootLogger.addHandler(fileHandler);
 

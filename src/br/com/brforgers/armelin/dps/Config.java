@@ -43,15 +43,29 @@ public class Config {
         try {
             File jarDir = new File(
                     Config.class.getProtectionDomain().getCodeSource().getLocation().toURI()).getParentFile();
-            File configFile = new File(jarDir, "config.json");
+            File customDir = new File(jarDir, "custom-status");
+            File configFile = new File(customDir, "config.json");
 
             if (!configFile.exists()) {
-                System.out.println("[Config] config.json not found next to JAR. Creating default config.json...");
+                File rootConfig = new File(jarDir, "config.json");
+                if (rootConfig.exists()) {
+                    configFile = rootConfig;
+                }
+            }
+
+            String defaultLogPath = new File(customDir, "logs/dps.log").getPath();
+
+            if (!configFile.exists()) {
+                System.out.println("[Config] config.json not found. Creating default in custom-status/config.json...");
                 try {
+                    if (!customDir.exists()) {
+                        customDir.mkdirs();
+                    }
+                    configFile = new File(customDir, "config.json");
                     JSONObject defJson = new JSONObject();
                     defJson.put("clientId", defaultClientId);
                     defJson.put("wsPort", defaultPort);
-                    defJson.put("logFile", "logs/dps.log");
+                    defJson.put("logFile", "custom-status/logs/dps.log");
                     FileWriter fw = new FileWriter(configFile);
                     fw.write(defJson.toString(2));
                     fw.close();
@@ -60,7 +74,7 @@ public class Config {
                     System.out.println("[Config] Note: Could not write default config.json: " + ex.getMessage());
                 }
                 return new Config(defaultClientId, defaultClientId, defaultClientId, defaultClientId, defaultClientId,
-                        defaultClientId, defaultPort, defaultTimeout, "logs/dps.log");
+                        defaultClientId, defaultPort, defaultTimeout, defaultLogPath);
             }
 
             FileInputStream fis = new FileInputStream(configFile);
@@ -78,7 +92,10 @@ public class Config {
             String animeClientId = json.optString("animeClientId", defaultClientId);
             int wsPort = json.optInt("wsPort", defaultPort);
             long sourceTimeout = json.optLong("sourceTimeout", defaultTimeout);
-            String logFile = json.optString("logFile", "logs/dps.log");
+            String logFile = json.optString("logFile", defaultLogPath);
+            if ("logs/dps.log".equals(logFile) && customDir.exists()) {
+                logFile = defaultLogPath;
+            }
 
             String fmt = "  %-18s %s";
             System.out.println("[Config] Loaded config.json");

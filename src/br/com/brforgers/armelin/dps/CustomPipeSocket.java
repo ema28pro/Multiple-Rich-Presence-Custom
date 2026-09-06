@@ -338,9 +338,26 @@ public class CustomPipeSocket {
         }
     }
 
+    private static File getStateFile() {
+        File jarDir = getJarDir();
+        File customDir = new File(jarDir, "custom-status");
+        File stateInCustom = new File(customDir, "bridge-state.json");
+        if (stateInCustom.exists()) {
+            return stateInCustom;
+        }
+        File stateInRoot = new File(jarDir, "bridge-state.json");
+        if (stateInRoot.exists()) {
+            return stateInRoot;
+        }
+        if (!customDir.exists()) {
+            customDir.mkdirs();
+        }
+        return stateInCustom;
+    }
+
     private static void saveState() {
         try {
-            File stateFile = new File(getJarDir(), "bridge-state.json");
+            File stateFile = getStateFile();
             JSONObject state = new JSONObject();
 
             JSONObject customState = new JSONObject();
@@ -354,7 +371,7 @@ public class CustomPipeSocket {
             FileWriter writer = new FileWriter(stateFile);
             writer.write(state.toString(2));
             writer.close();
-            logger.info("[CustomBridge] State saved (active: " + active + ")");
+            logger.info("[CustomBridge] State saved to " + stateFile.getName() + " (active: " + active + ")");
         } catch (Exception e) {
             logger.severe("[CustomBridge] Error saving state: " + e.getMessage());
         }
@@ -362,7 +379,7 @@ public class CustomPipeSocket {
 
     private static void loadState() {
         try {
-            File stateFile = new File(getJarDir(), "bridge-state.json");
+            File stateFile = getStateFile();
             if (!stateFile.exists()) {
                 File oldFile = new File(getJarDir(), "custom-state.json");
                 if (oldFile.exists()) {
@@ -389,7 +406,7 @@ public class CustomPipeSocket {
                     currentRpc = state.getJSONObject("rpc");
                 }
             }
-            logger.info("[CustomBridge] Loaded previous state: active=" + active);
+            logger.info("[CustomBridge] Loaded previous state from " + stateFile.getName() + ": active=" + active);
         } catch (Exception e) {
             logger.warning("[CustomBridge] Could not load state: " + e.getMessage());
         }
