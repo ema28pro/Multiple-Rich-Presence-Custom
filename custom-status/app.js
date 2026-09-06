@@ -499,11 +499,6 @@
             toggleStreamField();
         }
 
-        function onFormChange() {
-            syncIncompatibilities();
-            if (active) sendRPC();
-            updatePreview();
-        }
 
         // Time parsing helpers
         function parseTimeInput(val) {
@@ -836,6 +831,7 @@
         }
 
         function onFormChange() {
+            syncIncompatibilities();
             if (active) {
                 sendRPC();
             }
