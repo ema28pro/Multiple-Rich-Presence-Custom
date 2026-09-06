@@ -19,17 +19,24 @@ if exist "%DIST_DIR%" rmdir /s /q "%DIST_DIR%"
 mkdir "%DIST_DIR%"
 mkdir "%DIST_DIR%\custom-status"
 
-echo [1/4] Copiando binarios y configuracion...
+echo [1/4] Copiando ejecutable principal...
 copy /y "DiscordCustomRPC.jar" "%DIST_DIR%\" >nul
-copy /y "config.json" "%DIST_DIR%\" >nul
-if exist "bridge-state.json" copy /y "bridge-state.json" "%DIST_DIR%\" >nul
-copy /y "INICIO-RAPIDO-CUSTOM.md" "%DIST_DIR%\INICIO-RAPIDO.md" >nul
 
-echo [2/4] Creando script de logs...
-echo java -jar DiscordCustomRPC.jar > "%DIST_DIR%\logs.bat"
-
-echo [3/4] Copiando interfaz web custom-status...
+echo [2/4] Copiando interfaz web y configuraciones dentro de custom-status...
 xcopy /e /i /y "custom-status" "%DIST_DIR%\custom-status" >nul
+if exist "config.json" copy /y "config.json" "%DIST_DIR%\custom-status\" >nul
+if exist "bridge-state.json" copy /y "bridge-state.json" "%DIST_DIR%\custom-status\" >nul
+if exist "custom-status\config.json" copy /y "custom-status\config.json" "%DIST_DIR%\custom-status\" >nul
+if exist "custom-status\bridge-state.json" copy /y "custom-status\bridge-state.json" "%DIST_DIR%\custom-status\" >nul
+copy /y "INICIO-RAPIDO-CUSTOM.md" "%DIST_DIR%\custom-status\INICIO-RAPIDO.md" >nul
+
+echo [3/4] Creando script de logs dentro de custom-status...
+(
+echo @echo off
+echo cd /d "%%~dp0\.."
+echo java -jar DiscordCustomRPC.jar
+echo pause
+) > "%DIST_DIR%\custom-status\logs.bat"
 
 echo [4/4] Comprimiendo Custom-Status-Release.zip...
 if exist "Custom-Status-Release.zip" del /f /q "Custom-Status-Release.zip"
