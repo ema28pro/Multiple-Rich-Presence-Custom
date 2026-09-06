@@ -18,6 +18,9 @@
 
 Discord Rich Presence para múltiples actividades: Tetr.io, Wplace, YouTube, Anime, Roblox y estados personalizados.
 
+> [!IMPORTANT]
+> **Aviso:** Actualmente, la **única opción funcional** es la versión **Custom** disponible en [Releases](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/releases) (`Custom-Status-Release.zip` o `DiscordCustomRPC.jar`). Las funciones multi-actividad (Tetr.io, YouTube, Roblox, etc.) se encuentran pausadas/no funcionales.
+
 Basado en [TETRIO-browser-rpc](https://github.com/PATXS/TETRIO-browser-rpc) de PATXS.
 
 **[English version](README-EN.md)**
@@ -39,25 +42,18 @@ No necesitas usar todas las funciones. Instala solo los userscripts que quieras.
 
 ## Instalación
 
-Puedes elegir entre dos versiones segun lo que necesites:
+> [!NOTE]
+> La **única opción funcional actualmente** es la versión **Custom Status** disponible en Releases.
 
-### Opcion A: Version Completa (Multi-Source)
-Incluye soporte para TETR.IO, YouTube, Roblox, Anime, Wplace y Custom Status.
-1. **[Descarga el ZIP Completo](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (rama `release`)
-2. Extrae el ZIP en una carpeta cualquiera y ejecuta `DiscordPipeSocket.jar`.
+1. Ve a **[GitHub Releases](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/releases)** y descarga **`Custom-Status-Release.zip`** (o `DiscordCustomRPC.jar`).
+2. Extrae el ZIP en cualquier carpeta.
+3. Ejecuta **`DiscordCustomRPC.jar`** (doble clic).
+4. Consulta la guía rápida **[INICIO-RAPIDO-CUSTOM.md](INICIO-RAPIDO-CUSTOM.md)** para configurarlo en 2 sencillos pasos.
 
-### Opcion B: Version Custom Status (Standalone Ligera)
-Dedicada exclusivamente a estados personalizados, sin scripts de Tampermonkey ni monitor de Roblox.
-1. Ejecuta `DiscordCustomRPC.jar` (o genera `Custom-Status-Release.zip` con `package-custom.bat`).
-2. Consulta la guia **[INICIO-RAPIDO-CUSTOM.md](INICIO-RAPIDO-CUSTOM.md)** para configurarlo en 2 pasos.
-
-El paquete completo incluye:
-- `DiscordPipeSocket.jar` — bridge multi-fuente
-- `DiscordCustomRPC.jar` — bridge exclusivo para Custom Status
-- `config.json` — configuracion de Client IDs y puertos
+El paquete ligero incluye:
+- `DiscordCustomRPC.jar` — bridge ligero para Custom Status
+- `config.json` — configuración básica
 - `custom-status/` — panel web de estado personalizado
-- `userscripts/` — scripts para Tampermonkey
-- `package-custom.bat` — generador de paquete ligero independiente
 
 ## Requisitos
 
