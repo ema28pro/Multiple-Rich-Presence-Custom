@@ -4,721 +4,568 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Discord RPC — Custom Status</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: #1a1a2e;
-            color: #e0e0e0;
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            padding: 30px 20px;
-        }
-
-        .container {
-            display: flex;
-            gap: 40px;
-            max-width: 1000px;
-            width: 100%;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .form-panel {
-            background: #16213e;
-            border-radius: 12px;
-            padding: 28px;
-            flex: 1;
-            min-width: 380px;
-            max-width: 480px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        }
-
-        .form-panel h1 {
-            font-size: 20px;
-            margin-bottom: 6px;
-            color: #7289da;
-        }
-
-        .form-panel .subtitle {
-            font-size: 12px;
-            color: #888;
-            margin-bottom: 20px;
-        }
-
-        .connection-status {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 12px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            margin-bottom: 16px;
-        }
-
-        .connection-status .dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-
-        .connection-status.connected {
-            background: rgba(67, 181, 129, 0.15);
-            color: #43b581;
-        }
-
-        .connection-status.connected .dot {
-            background: #43b581;
-        }
-
-        .connection-status.disconnected {
-            background: rgba(240, 71, 71, 0.15);
-            color: #f04747;
-        }
-
-        .connection-status.disconnected .dot {
-            background: #f04747;
-        }
-
-        .form-group {
-            margin-bottom: 14px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #8e9297;
-            margin-bottom: 5px;
-            letter-spacing: 0.5px;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="url"] {
-            width: 100%;
-            background: #0f3460;
-            border: 1px solid #2a4a7f;
-            border-radius: 6px;
-            padding: 9px 12px;
-            color: #e0e0e0;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-
-        .form-group input:focus {
-            border-color: #7289da;
-        }
-
-        .form-group input::placeholder {
-            color: #555;
-        }
-
-        .form-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .form-row .form-group {
-            flex: 1;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 14px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 18px;
-            height: 18px;
-            accent-color: #7289da;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            font-size: 13px;
-            color: #b9bbbe;
-            cursor: pointer;
-            text-transform: none;
-            font-weight: 400;
-        }
-
-        .separator {
-            border: none;
-            border-top: 1px solid #2a4a7f;
-            margin: 18px 0;
-        }
-
-        .section-title {
-            font-size: 12px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #7289da;
-            margin-bottom: 10px;
-            letter-spacing: 0.5px;
-        }
-
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: #7289da;
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: #677bc4;
-        }
-
-        .btn-danger {
-            background: #f04747;
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #d83c3c;
-        }
-
-        .btn-secondary {
-            background: #4f545c;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5d6269;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-
-        .preview-panel {
-            min-width: 320px;
-            max-width: 360px;
-        }
-
-        .preview-panel h2 {
-            font-size: 14px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #8e9297;
-            margin-bottom: 12px;
-            letter-spacing: 0.5px;
-        }
-
-        .discord-card {
-            background: #2f3136;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-        }
-
-        .discord-card-header {
-            background: #202225;
-            padding: 10px 14px;
-            font-size: 11px;
-            text-transform: uppercase;
-            font-weight: 700;
-            color: #8e9297;
-            letter-spacing: 0.5px;
-        }
-
-        .discord-card-body {
-            padding: 14px;
-            display: flex;
-            gap: 14px;
-        }
-
-        .dc-images {
-            position: relative;
-            flex-shrink: 0;
-            width: 64px;
-            height: 64px;
-        }
-
-        .dc-large-img {
-            width: 64px;
-            height: 64px;
-            border-radius: 8px;
-            object-fit: cover;
-            background: #40444b;
-        }
-
-        .dc-small-img {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            object-fit: cover;
-            background: #40444b;
-            border: 3px solid #2f3136;
-            position: absolute;
-            bottom: -4px;
-            right: -4px;
-        }
-
-        .dc-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .dc-app-name {
-            font-size: 12px;
-            font-weight: 700;
-            color: #ffffff;
-            margin-bottom: 2px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .dc-details,
-        .dc-state,
-        .dc-time {
-            font-size: 12px;
-            color: #b9bbbe;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .dc-time {
-            color: #72767d;
-        }
-
-        .dc-empty {
-            color: #555;
-            font-style: italic;
-            font-size: 13px;
-            text-align: center;
-            padding: 30px 14px;
-        }
-
-        .hidden {
-            display: none !important;
-        }
-
-        .img-tooltip {
-            position: relative;
-        }
-
-        .img-tooltip:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: calc(100% + 6px);
-            left: 50%;
-            transform: translateX(-50%);
-            background: #18191c;
-            color: #dcddde;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 12px;
-            white-space: nowrap;
-            pointer-events: none;
-            z-index: 10;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-        }
-    </style>
+    <title>Discord RPC — Custom Status Studio</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <div class="container">
-        <div class="form-panel">
-            <h1>Custom Discord Status</h1>
-            <p class="subtitle">Configure your custom Rich Presence and send it to the bridge</p>
+    <div class="layout-container">
 
-            <div id="connStatus" class="connection-status disconnected">
-                <span class="dot"></span>
-                <span id="connText">Disconnected</span>
+        <!-- Top Header Bar -->
+        <header class="header-bar">
+            <div class="header-title-group">
+                <h1>Discord RPC — <span>Custom Studio</span></h1>
+                <p>Configuración, prueba y control de presencia interactiva en Discord en tiempo real.</p>
             </div>
-
-            <hr class="separator">
-
-            <div class="form-group">
-                <label>Details (Line 1)</label>
-                <input type="text" id="rpcDetails" placeholder="Playing something cool..." maxlength="128">
-            </div>
-            <div class="form-group">
-                <label>State (Line 2)</label>
-                <input type="text" id="rpcState" placeholder="Having fun" maxlength="128">
-            </div>
-
-            <hr class="separator">
-
-            <div class="section-title">Images</div>
-            <div class="form-group">
-                <label>Large Image URL</label>
-                <input type="url" id="rpcLargeImg" placeholder="https://example.com/image.png">
-            </div>
-            <div class="form-group">
-                <label>Large Image Tooltip</label>
-                <input type="text" id="rpcLargeText" placeholder="My cool image" maxlength="128">
-            </div>
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Small Image URL</label>
-                    <input type="url" id="rpcSmallImg" placeholder="https://...">
+            <div class="header-controls">
+                <div id="connStatus" class="connection-badge disconnected">
+                    <span class="dot"></span>
+                    <span id="connText">Desconectado</span>
                 </div>
-                <div class="form-group">
-                    <label>Small Image Tooltip</label>
-                    <input type="text" id="rpcSmallText" placeholder="Icon" maxlength="128">
+                <button id="btnActivate" class="btn btn-primary">Activar presencia</button>
+                <button id="btnDeactivate" class="btn btn-danger hidden">Detener presencia</button>
+                <button id="btnSave" class="btn btn-secondary">Guardar</button>
+                <button id="btnPreset" class="btn btn-ghost" title="Cargar plantilla de prueba completa">Cargar ejemplo</button>
+            </div>
+        </header>
+
+        <!-- Left Column: Form Sections -->
+        <div class="form-column">
+
+            <!-- 01. Application ID & Identity -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">01</span> Aplicación Discord (Application ID)
+                    </div>
+                    <span class="section-badge" id="appIdBadge">Default</span>
+                </div>
+                <div class="section-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Seleccionar Aplicación <span class="hint">config.json o historial</span></label>
+                            <select id="rpcAppIdSelect">
+                                <optgroup label="Aplicaciones en config.json" id="optgroupConfig">
+                                    <option value="1480066932358119605">Default / General (1480066932358119605)</option>
+                                    <option value="688741895307788290">TETR.IO (688741895307788290)</option>
+                                    <option value="1480095698899701880">Roblox (1480095698899701880)</option>
+                                    <option value="1480095585011892265">YouTube (1480095585011892265)</option>
+                                    <option value="1480394033112023171">WPlace (1480394033112023171)</option>
+                                    <option value="1480393899473371177">Anime (1480393899473371177)</option>
+                                </optgroup>
+                                <optgroup label="Historial verificado" id="optgroupHistory">
+                                    <!-- Populated dynamically from localStorage -->
+                                </optgroup>
+                                <option value="custom">ID personalizado (manual)...</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <span>ID Activo (Application ID)</span>
+                                <span id="appIdStatusHint" class="hint" style="color: var(--success);">Definido en config.json</span>
+                            </label>
+                            <div style="display: flex; gap: 8px;">
+                                <input type="text" id="rpcClientId" placeholder="Ej: 1480066932358119605" maxlength="24" value="1480066932358119605">
+                                <button id="btnClearHistory" class="btn btn-ghost" title="Limpiar historial de IDs personalizados probados" style="padding: 0 12px; font-size: 11px;">Limpiar</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <hr class="separator">
+            <!-- 02. General & Activity Type -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">02</span> Tipo de Actividad & General
+                    </div>
+                    <span class="section-badge">Core</span>
+                </div>
+                <div class="section-body">
+                    <div class="form-group">
+                        <label>Activity Type (activity_type) <span class="hint">Valores admitidos por Discord Desktop RPC:</span></label>
+                        <div class="type-pills">
+                            <label class="type-pill">
+                                <input type="radio" name="activityType" value="0" checked>
+                                <span>Jugando (0)</span>
+                            </label>
+                            <label class="type-pill">
+                                <input type="radio" name="activityType" value="2">
+                                <span>Escuchando (2)</span>
+                            </label>
+                            <label class="type-pill">
+                                <input type="radio" name="activityType" value="3">
+                                <span>Viendo (3)</span>
+                            </label>
+                            <label class="type-pill">
+                                <input type="radio" name="activityType" value="5">
+                                <span>Compitiendo (5)</span>
+                            </label>
+                        </div>
+                        <div class="info-callout" style="margin-top: 8px; font-size: 12px; border-left: 3px solid var(--warning); padding: 8px 12px; background: rgba(250, 166, 26, 0.08);">
+                            <strong>Restricción técnica:</strong> Discord Desktop rechaza el tipo 1 (Streaming) en la tubería local IPC con el error 4000. El estado de transmisión sólo se activa vinculando Twitch en Ajustes de Discord &gt; Conexiones o con un Bot en la API Gateway.
+                        </div>
+                    </div>
 
-            <div class="checkbox-group">
-                <input type="checkbox" id="rpcTimer">
-                <label for="rpcTimer">Show elapsed time</label>
-            </div>
-            <div class="form-group" id="timerInputGroup" style="display:none">
-                <label>Start time (HH:MM:SS)</label>
-                <input type="text" id="rpcTimerValue" placeholder="00:00:00" maxlength="8">
+                    <!-- Hidden Stream URL field to preserve schema compatibility -->
+                    <div class="form-group hidden" id="streamUrlGroup">
+                        <input type="hidden" id="rpcStreamUrl" value="">
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Nombre de la Actividad (name) <span class="hint">Sobrescribe el título de la app</span></label>
+                            <input type="text" id="rpcName" placeholder="Ej: TETR.IO / Custom Studio" maxlength="128">
+                        </div>
+
+                        <div class="form-group">
+                            <label>Status Display Type (status_display_type) <span class="hint">Elemento resaltado</span></label>
+                            <select id="rpcStatusDisplayType">
+                                <option value="">Por defecto (Default)</option>
+                                <option value="0">0 — Nombre de la App</option>
+                                <option value="1">1 — State</option>
+                                <option value="2">2 — Details</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Process ID (pid) <span class="hint">Opcional. Vacío = PID del bridge</span></label>
+                            <input type="number" id="rpcPid" placeholder="Ej: 1234">
+                        </div>
+                        <div class="form-group">
+                            <label>Instance Flag <span class="hint">Indica sesión instanciada</span></label>
+                            <div class="toggle-card" onclick="document.getElementById('rpcInstance').click()">
+                                <div class="toggle-info">
+                                    <span class="toggle-title">Instance</span>
+                                    <span class="toggle-desc">Valor booleano enviado al IPC de Discord</span>
+                                </div>
+                                <label class="switch" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="rpcInstance" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <hr class="separator">
+            <!-- 03. Text Content & Clickable URLs -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">03</span> Textos y Enlaces Clickeables
+                    </div>
+                    <span class="section-badge">Details & State</span>
+                </div>
+                <div class="section-body">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Details (Línea 1) <span class="hint">Máx. 128 caracteres</span></label>
+                            <input type="text" id="rpcDetails" placeholder="Ej: Ranked Match — 1v1 Final" maxlength="128">
+                        </div>
+                        <div class="form-group">
+                            <label>Details URL (details_url) <span class="hint">Enlace clickeable</span></label>
+                            <input type="url" id="rpcDetailsUrl" placeholder="https://ch.tetr.io/">
+                        </div>
+                    </div>
 
-            <div class="actions">
-                <button id="btnActivate" class="btn btn-primary">Activate</button>
-                <button id="btnDeactivate" class="btn btn-danger hidden">Deactivate</button>
-                <button id="btnSave" class="btn btn-secondary">Save Config</button>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>State (Línea 2) <span class="hint">Máx. 128 caracteres</span></label>
+                            <input type="text" id="rpcState" placeholder="Ej: Ronda decisiva" maxlength="128">
+                        </div>
+                        <div class="form-group">
+                            <label>State URL (state_url) <span class="hint">Enlace clickeable</span></label>
+                            <input type="url" id="rpcStateUrl" placeholder="https://tetr.io/">
+                        </div>
+                    </div>
+                </div>
             </div>
+
+            <!-- 04. Timestamps & Countdown -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">04</span> Tiempos y Cronómetro (Timestamps)
+                    </div>
+                    <span class="section-badge">Start, End & Music Bar</span>
+                </div>
+                <div class="section-body">
+                    <div class="info-callout" style="margin-bottom: 2px;">
+                        <strong>Modos de tiempo en Discord:</strong> Puedes elegir entre tiempo transcurrido (<em>"elapsed"</em>), cuenta regresiva (<em>"remaining"</em>) o la <strong>barra de reproducción de música</strong> (timeline con avance interactivo estilo Spotify). Al activar uno se ajustan los otros automáticamente.
+                    </div>
+
+                    <!-- Start Timestamp -->
+                    <div class="toggle-card" onclick="document.getElementById('rpcStartEnable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Tiempo Transcurrido (Start / Elapsed)</span>
+                            <span class="toggle-desc">Muestra el tiempo activo acumulado ("00:15:30 elapsed")</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcStartEnable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="startGroup" class="sub-panel hidden">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Offset inicial (HH:MM:SS) <span class="hint">Soporta valores altos como 6767:41:30</span></label>
+                                <input type="text" id="rpcStartOffset" placeholder="00:00:00" value="00:00:00">
+                            </div>
+                            <div class="form-group">
+                                <label>Unix Timestamp manual (segundos) <span class="hint">Opcional</span></label>
+                                <input type="number" id="rpcStartUnix" placeholder="Ej: 1725580800">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- End Timestamp -->
+                    <div class="toggle-card" onclick="document.getElementById('rpcEndEnable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Tiempo Restante / Cuenta Regresiva (End / Remaining)</span>
+                            <span class="toggle-desc">Muestra cuenta regresiva ("10:20 remaining")</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcEndEnable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="endGroup" class="sub-panel hidden">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Duración restante (HH:MM:SS) <span class="hint">Ej: 00:15:00</span></label>
+                                <input type="text" id="rpcEndOffset" placeholder="00:15:00" value="00:15:00">
+                            </div>
+                            <div class="form-group">
+                                <label>Unix Timestamp manual (segundos) <span class="hint">Opcional</span></label>
+                                <input type="number" id="rpcEndUnix" placeholder="Ej: 1725590000">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Music Progress Bar -->
+                    <div class="toggle-card" onclick="document.getElementById('rpcMusicBarEnable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Barra de Música / Progreso (Music Timeline)</span>
+                            <span class="toggle-desc">Muestra la barra de reproducción interactiva estilo Spotify (01:23 ──●── 03:45)</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcMusicBarEnable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="musicBarGroup" class="sub-panel hidden">
+                        <div class="info-callout" style="margin-bottom: 10px; font-size: 12px; background: rgba(88, 101, 242, 0.12); border: 1px solid rgba(88, 101, 242, 0.3); color: #c9cdfb;">
+                            <strong>Requisito oficial de Discord:</strong> Discord sólo dibuja la barra de progreso en los perfiles cuando el tipo de actividad es <strong>"Escuchando a"</strong> (Listening, Tipo 2). Al activar este modo se cambia a ese tipo de forma automática.
+                        </div>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Posición actual (MM:SS o HH:MM:SS) <span class="hint">Ej: 01:23 transcurrido</span></label>
+                                <input type="text" id="rpcMusicCurrent" placeholder="01:23" value="01:23">
+                            </div>
+                            <div class="form-group">
+                                <label>Duración total (MM:SS o HH:MM:SS) <span class="hint">Ej: 03:45 duración total</span></label>
+                                <input type="text" id="rpcMusicTotal" placeholder="03:45" value="03:45">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 05. Assets -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">05</span> Imágenes y Recursos (Assets)
+                    </div>
+                    <span class="section-badge">Large & Small</span>
+                </div>
+                <div class="section-body">
+
+                    <!-- Large Image -->
+                    <div class="form-group">
+                        <label>Large Image (large_image / largeImageKey) <span class="hint">URL HTTPS (Tenor GIF, Imgur, CDN) o Asset Key de Developer Portal</span></label>
+                        <input type="text" id="rpcLargeImg" placeholder="https://media.tenor.com/... o asset_name">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Large Image Tooltip (large_text)</label>
+                            <input type="text" id="rpcLargeText" placeholder="Texto al pasar el cursor" maxlength="128">
+                        </div>
+                        <div class="form-group">
+                            <label>Large Image URL (large_url) <span class="hint">Enlace clickeable</span></label>
+                            <input type="url" id="rpcLargeUrl" placeholder="https://tetr.io/">
+                        </div>
+                    </div>
+
+                    <hr style="border: 0; border-top: 1px dashed var(--border); margin: 6px 0;">
+
+                    <!-- Small Image -->
+                    <div class="form-group">
+                        <label>Small Image (small_image / smallImageKey) <span class="hint">Miniatura en esquina inferior</span></label>
+                        <input type="text" id="rpcSmallImg" placeholder="https://media.tenor.com/... o asset_name">
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Small Image Tooltip (small_text)</label>
+                            <input type="text" id="rpcSmallText" placeholder="Texto al pasar el cursor" maxlength="128">
+                        </div>
+                        <div class="form-group">
+                            <label>Small Image URL (small_url) <span class="hint">Enlace clickeable</span></label>
+                            <input type="url" id="rpcSmallUrl" placeholder="https://ch.tetr.io/u/tetrio">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 06. Multiplayer & Lobby (Party & Secrets) -->
+            <div class="section-card" id="multiplayerCard">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">06</span> Partida Multijugador (Lobby, Unirse & Espectar)
+                    </div>
+                    <span class="section-badge">Party & Secrets</span>
+                </div>
+                <div class="section-body">
+                    <div class="info-callout" style="margin-bottom: 12px;">
+                        <strong>Exclusión mutua:</strong> Discord prohíbe usar simultáneamente botones web y funciones de unirse/espectar (Error 5005). Al activar el Modo Multijugador se desactivarán automáticamente los botones de la sección 07.
+                    </div>
+
+                    <div class="toggle-card" onclick="document.getElementById('rpcPartyEnable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Habilitar Modo Multijugador</span>
+                            <span class="toggle-desc">Muestra el lobby en tu perfil y permite a tus amigos unirse o espectar</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcPartyEnable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+
+                    <div id="partyGroup" class="sub-panel hidden">
+                        <!-- Lobby Capacity -->
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Jugadores actuales <span class="hint">En la sala</span></label>
+                                <input type="number" id="rpcPartyCur" placeholder="1" value="1" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label>Capacidad máxima <span class="hint">Límite de la sala</span></label>
+                                <input type="number" id="rpcPartyMax" placeholder="4" value="4" min="1">
+                            </div>
+                        </div>
+
+                        <!-- Status Notice of Capacity / Clickable -->
+                        <div id="partyStatusBanner" style="font-size: 12px; margin-bottom: 12px; padding: 8px 12px; border-radius: 6px; background: rgba(87, 242, 135, 0.1); color: var(--success); border: 1px solid rgba(87, 242, 135, 0.25);">
+                            <strong>Cupo disponible (3 libres):</strong> El botón "Unirse" saldrá CLICKABLE y activo para tus amigos en Discord.
+                        </div>
+
+                        <!-- Interaction options -->
+                        <div style="font-size: 13px; font-weight: 600; color: var(--text-main); margin-bottom: 8px;">
+                            Botones de interacción para amigos:
+                        </div>
+
+                        <div class="toggle-card" style="margin-bottom: 8px;" onclick="document.getElementById('rpcAllowJoin').click()">
+                            <div class="toggle-info">
+                                <span class="toggle-title">Permitir que amigos se unan (Botón "Unirse")</span>
+                                <span class="toggle-desc">Muestra el botón oficial "Unirse a partida" en tu perfil (requiere cupo libre)</span>
+                            </div>
+                            <label class="switch" onclick="event.stopPropagation()">
+                                <input type="checkbox" id="rpcAllowJoin" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <div class="toggle-card" style="margin-bottom: 12px;" onclick="document.getElementById('rpcAllowSpectate').click()">
+                            <div class="toggle-info">
+                                <span class="toggle-title">Permitir que amigos especten (Botón "Espectar")</span>
+                                <span class="toggle-desc">Muestra el botón "Espectar" en tu perfil</span>
+                            </div>
+                            <label class="switch" onclick="event.stopPropagation()">
+                                <input type="checkbox" id="rpcAllowSpectate" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+
+                        <!-- Advanced Options (Tokens manuales) -->
+                        <div style="margin-top: 10px; border-top: 1px dashed var(--border); padding-top: 10px;">
+                            <div class="toggle-card" style="background: transparent; border: none; padding: 4px 0; margin-bottom: 6px;" onclick="document.getElementById('rpcAdvancedTokensEnable').click()">
+                                <div class="toggle-info">
+                                    <span class="toggle-title" style="font-size: 13px; color: var(--text-muted);">Ajustes avanzados de tokens (Opcional)</span>
+                                    <span class="toggle-desc" style="font-size: 11px;">Personalizar Party ID y tokens secretos manualmente si tu juego o bot lo requiere</span>
+                                </div>
+                                <label class="switch" onclick="event.stopPropagation()">
+                                    <input type="checkbox" id="rpcAdvancedTokensEnable">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="advancedTokensGroup" class="sub-panel hidden" style="margin-top: 6px;">
+                                <div class="form-grid">
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Party ID (party_id) <span class="hint">Si está vacío, se autogenera</span></label>
+                                        <input type="text" id="rpcPartyId" placeholder="sala-publica-01">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Join Secret (join) <span class="hint">Mín. 2 caracteres</span></label>
+                                        <input type="text" id="rpcJoinSecret" placeholder="token_join_12345">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Spectate Secret (spectate) <span class="hint">Mín. 2 caracteres</span></label>
+                                        <input type="text" id="rpcSpectateSecret" placeholder="token_spec_12345">
+                                    </div>
+                                    <div class="form-group" style="grid-column: 1 / -1;">
+                                        <label>Match Secret (match) <span class="hint">Opcional. Mín. 2 caracteres si se especifica</span></label>
+                                        <input type="text" id="rpcMatchSecret" placeholder="token_match_12345">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 07. Interactive Buttons -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">07</span> Botones Interactivos (Buttons)
+                    </div>
+                    <span class="section-badge">Máx. 2</span>
+                </div>
+                <div class="section-body">
+                    <div class="info-callout" style="margin-bottom: 10px;">
+                        <strong>Exclusión mutua:</strong> Discord prohíbe usar simultáneamente botones web y funciones de unirse/espectar (Error 5005). Al activar cualquier botón interactivo se desactivará automáticamente el Modo Multijugador de la sección 06.
+                    </div>
+                    <div class="info-callout">
+                        <strong>Comportamiento oficial de Discord:</strong> El cliente de Discord oculta los botones en tu propia tarjeta cuando inspeccionas tu perfil para evitar clicks redundantes. Cualquier amigo u otro usuario que revise tu perfil sí verá los botones activos y funcionales.
+                    </div>
+
+                    <!-- Button 1 -->
+                    <div class="toggle-card" onclick="document.getElementById('rpcBtn1Enable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Habilitar Botón 1</span>
+                            <span class="toggle-desc">Primer botón de enlace clickeable</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcBtn1Enable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="btn1Group" class="sub-panel hidden">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Texto del Botón 1 (label) <span class="hint">Máx. 32 caracteres</span></label>
+                                <input type="text" id="rpcBtn1Text" placeholder="Ej: Ver perfil de jugador" maxlength="32">
+                            </div>
+                            <div class="form-group">
+                                <label>URL de Destino (url) <span class="hint">https://...</span></label>
+                                <input type="url" id="rpcBtn1Url" placeholder="https://ch.tetr.io/" maxlength="512">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Button 2 -->
+                    <div class="toggle-card" onclick="document.getElementById('rpcBtn2Enable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Habilitar Botón 2</span>
+                            <span class="toggle-desc">Segundo botón de enlace clickeable</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcBtn2Enable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="btn2Group" class="sub-panel hidden">
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Texto del Botón 2 (label) <span class="hint">Máx. 32 caracteres</span></label>
+                                <input type="text" id="rpcBtn2Text" placeholder="Ej: Sitio web oficial" maxlength="32">
+                            </div>
+                            <div class="form-group">
+                                <label>URL de Destino (url) <span class="hint">https://...</span></label>
+                                <input type="url" id="rpcBtn2Url" placeholder="https://ema28pro.github.io/" maxlength="512">
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- 08. Payload Override -->
+            <div class="section-card">
+                <div class="section-header">
+                    <div class="section-title">
+                        <span class="section-num">08</span> Sobrescritura de Payload (Raw JSON)
+                    </div>
+                    <span class="section-badge">Modo Avanzado</span>
+                </div>
+                <div class="section-body">
+                    <div class="toggle-card" onclick="document.getElementById('rpcOverrideEnable').click()">
+                        <div class="toggle-info">
+                            <span class="toggle-title">Activar Sobrescritura Manual</span>
+                            <span class="toggle-desc">Inyecta o reemplaza propiedades directamente en el objeto de actividad</span>
+                        </div>
+                        <label class="switch" onclick="event.stopPropagation()">
+                            <input type="checkbox" id="rpcOverrideEnable">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="overrideGroup" class="sub-panel hidden">
+                        <div class="form-group">
+                            <label>Objeto JSON de Sobrescritura <span id="jsonStatus" class="hint"></span></label>
+                            <textarea id="rpcPayloadOverride" placeholder='{\n  "flags": 1,\n  "details": "Modo manual"\n}'></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Action Controls -->
+            <div style="display: flex; gap: 12px; margin-top: 8px;">
+                <button id="btnActivateBottom" class="btn btn-primary" style="flex: 1;">Activar presencia en Discord</button>
+                <button id="btnDeactivateBottom" class="btn btn-danger hidden" style="flex: 1;">Detener presencia</button>
+                <button id="btnSaveBottom" class="btn btn-secondary">Guardar configuración</button>
+            </div>
+
         </div>
 
-        <div class="preview-panel">
-            <h2>Preview</h2>
+        <!-- Right Column: Discord Live Preview & Debug JSON -->
+        <div class="preview-column">
+
+            <div class="preview-panel-title">
+                <span>Previsualización en Discord</span>
+                <span class="section-badge" id="previewTypeBadge">PLAYING</span>
+            </div>
+
+            <!-- Discord Native Card Widget -->
             <div class="discord-card">
-                <div class="discord-card-header">Playing a Game</div>
+                <div class="discord-card-header" id="cardHeader">PLAYING A GAME</div>
                 <div id="previewContent">
-                    <div class="dc-empty">Configure your status and press Activate</div>
+                    <!-- Populated dynamically via app.js -->
                 </div>
             </div>
+
+            <!-- Outgoing JSON Inspector -->
+            <div class="json-viewer-header">
+                <span>Payload WebSocket (JSON)</span>
+                <button id="btnCopyJson" class="btn-copy">Copiar</button>
+            </div>
+            <pre id="jsonDebug">{}</pre>
+
         </div>
+
     </div>
 
-    <script>
-        const els = {
-            details: document.getElementById("rpcDetails"),
-            state: document.getElementById("rpcState"),
-            largeImg: document.getElementById("rpcLargeImg"),
-            largeText: document.getElementById("rpcLargeText"),
-            smallImg: document.getElementById("rpcSmallImg"),
-            smallText: document.getElementById("rpcSmallText"),
-            timer: document.getElementById("rpcTimer"),
-            timerValue: document.getElementById("rpcTimerValue"),
-            timerInputGroup: document.getElementById("timerInputGroup"),
-            activate: document.getElementById("btnActivate"),
-            deactivate: document.getElementById("btnDeactivate"),
-            save: document.getElementById("btnSave"),
-            connStatus: document.getElementById("connStatus"),
-            connText: document.getElementById("connText"),
-            preview: document.getElementById("previewContent"),
-        };
-
-        let active = false;
-        let startTime = null;
-        let socket = null;
-
-        // ---- Timer checkbox toggle ----
-        els.timer.addEventListener("change", () => {
-            els.timerInputGroup.style.display = els.timer.checked ? "" : "none";
-            // If unchecked, clear startTime immediately
-            if (!els.timer.checked) {
-                startTime = null;
-            }
-            if (active) sendRPC();
-        });
-
-        function parseTimeInput(val) {
-            const parts = val.trim().split(":").map(Number);
-            if (parts.some(isNaN)) return 0;
-            if (parts.length === 3) return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
-            if (parts.length === 2) return (parts[0] * 60 + parts[1]) * 1000;
-            if (parts.length === 1) return parts[0] * 1000;
-            return 0;
-        }
-
-        function msToTimeInput(ms) {
-            const totalSec = Math.floor(ms / 1000);
-            const h = Math.floor(totalSec / 3600);
-            const m = Math.floor((totalSec % 3600) / 60);
-            const s = totalSec % 60;
-            return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-        }
-
-        // ---- WebSocket ----
-        function connect() {
-            socket = new WebSocket("ws://127.0.0.1:6680");
-
-            socket.onopen = () => {
-                els.connStatus.className = "connection-status connected";
-                els.connText.textContent = "Connected to bridge";
-                try {
-                    socket.send(JSON.stringify({ action: "query", source: "custom" }));
-                } catch (e) { }
-            };
-
-            socket.onmessage = (event) => {
-                try {
-                    const data = JSON.parse(event.data);
-                    if (data.type === "queryResponse" && data.source === "custom") {
-                        if (data.active && data.persistent) {
-                            active = true;
-                            if (data.rpc) {
-                                if (data.rpc.details) els.details.value = data.rpc.details;
-                                if (data.rpc.state) els.state.value = data.rpc.state;
-                                if (data.rpc.largeImageKey) els.largeImg.value = data.rpc.largeImageKey;
-                                if (data.rpc.largeImageText) els.largeText.value = data.rpc.largeImageText;
-                                if (data.rpc.smallImageKey) els.smallImg.value = data.rpc.smallImageKey;
-                                if (data.rpc.smallImageText) els.smallText.value = data.rpc.smallImageText;
-                                if (data.rpc.startTimestamp) {
-                                    startTime = typeof data.rpc.startTimestamp === "number"
-                                        ? (data.rpc.startTimestamp < 1e12
-                                            ? data.rpc.startTimestamp * 1000
-                                            : data.rpc.startTimestamp)
-                                        : Date.now();
-                                    els.timer.checked = true;
-                                    els.timerInputGroup.style.display = "";
-                                    els.timerValue.value = msToTimeInput(Date.now() - startTime);
-                                } else {
-                                    // The bridge has no timestamp → ensure timer is off
-                                    startTime = null;
-                                    els.timer.checked = false;
-                                    els.timerInputGroup.style.display = "none";
-                                }
-                            }
-                            els.activate.classList.add("hidden");
-                            els.deactivate.classList.remove("hidden");
-                            updatePreview();
-                        } else {
-                            active = false;
-                            startTime = null;
-                            if (data.active && !data.persistent) {
-                                try {
-                                    socket.send(JSON.stringify({ source: "custom", action: "remove" }));
-                                } catch (ex) { }
-                            }
-                            els.deactivate.classList.add("hidden");
-                            els.activate.classList.remove("hidden");
-                            updatePreview();
-                        }
-                    }
-                } catch (e) { }
-            };
-
-            socket.onclose = () => {
-                els.connStatus.className = "connection-status disconnected";
-                els.connText.textContent = "Disconnected — retrying...";
-                setTimeout(connect, 5000);
-            };
-
-            socket.onerror = () => { };
-        }
-
-        connect();
-
-        // ---- Build RPC payload ----
-        function buildPayload() {
-            const rpc = {};
-
-            const details = els.details.value.trim();
-            const state = els.state.value.trim();
-            if (details) rpc.details = details;
-            if (state) rpc.state = state;
-
-            const largeImg = els.largeImg.value.trim();
-            const largeText = els.largeText.value.trim();
-            if (largeImg) rpc.largeImageKey = largeImg;
-            if (largeText) rpc.largeImageText = largeText;
-
-            const smallImg = els.smallImg.value.trim();
-            const smallText = els.smallText.value.trim();
-            if (smallImg) rpc.smallImageKey = smallImg;
-            if (smallText) rpc.smallImageText = smallText;
-
-            // ── FIX: always set startTimestamp explicitly ──────────
-            // // If checkbox is NOT checked → null (bridge removes it)
-            // // If checked → calculate from input
-            if (els.timer.checked) {
-                if (!startTime) {
-                    const customMs = parseTimeInput(els.timerValue.value);
-                    startTime = Date.now() - customMs;
-                }
-                rpc.startTimestamp = startTime;
-            } else {
-                rpc.startTimestamp = null; // explícito: quitar timestamp del bridge
-                startTime = null;
-            }
-
-            return { source: "custom", priority: 4, persistent: true, rpc };
-        }
-
-        // ---- Send ----
-        function sendRPC() {
-            if (!socket || socket.readyState !== WebSocket.OPEN) return;
-            try {
-                socket.send(JSON.stringify(buildPayload()));
-            } catch (e) { }
-        }
-
-        function removeRPC() {
-            if (!socket || socket.readyState !== WebSocket.OPEN) return;
-            try {
-                socket.send(JSON.stringify({ source: "custom", action: "remove" }));
-            } catch (e) { }
-        }
-
-        // ---- Activate / Deactivate ----
-        els.activate.addEventListener("click", () => {
-            active = true;
-            // Calculate startTime only if the timer is checked
-            if (els.timer.checked) {
-                const customMs = parseTimeInput(els.timerValue.value);
-                startTime = Date.now() - customMs;
-            } else {
-                startTime = null;
-            }
-            els.activate.classList.add("hidden");
-            els.deactivate.classList.remove("hidden");
-            sendRPC();
-            updatePreview();
-            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
-        });
-
-        els.deactivate.addEventListener("click", () => {
-            active = false;
-            startTime = null;
-            els.deactivate.classList.add("hidden");
-            els.activate.classList.remove("hidden");
-            removeRPC();
-            updatePreview();
-            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
-        });
-
-        // ---- Save / Load config ----
-        function getConfig() {
-            return {
-                active: active,
-                details: els.details.value,
-                state: els.state.value,
-                largeImg: els.largeImg.value,
-                largeText: els.largeText.value,
-                smallImg: els.smallImg.value,
-                smallText: els.smallText.value,
-                timer: els.timer.checked,
-                timerValue: els.timerValue.value,
-            };
-        }
-
-        function loadConfig(cfg) {
-            if (!cfg) return;
-            els.details.value = cfg.details || "";
-            els.state.value = cfg.state || "";
-            els.largeImg.value = cfg.largeImg || "";
-            els.largeText.value = cfg.largeText || "";
-            els.smallImg.value = cfg.smallImg || "";
-            els.smallText.value = cfg.smallText || "";
-            els.timer.checked = !!cfg.timer;
-            els.timerValue.value = cfg.timerValue || "00:00:00";
-            els.timerInputGroup.style.display = cfg.timer ? "" : "none";
-            // Clear startTime on load — it will be recalculated on activate
-            startTime = null;
-        }
-
-        els.save.addEventListener("click", () => {
-            localStorage.setItem("customRpcConfig", JSON.stringify(getConfig()));
-            els.save.textContent = "Saved!";
-            setTimeout(() => { els.save.textContent = "Save Config"; }, 1500);
-        });
-
-        try {
-            const saved = localStorage.getItem("customRpcConfig");
-            if (saved) loadConfig(JSON.parse(saved));
-        } catch (e) { }
-
-        // ---- Live Preview ----
-        function updatePreview() {
-            if (!active) {
-                els.preview.innerHTML = '<div class="dc-empty">Configure your status and press Activate</div>';
-                return;
-            }
-
-            const details = els.details.value.trim() || "No details set";
-            const state = els.state.value.trim();
-            const largeImg = els.largeImg.value.trim();
-            const largeText = els.largeText.value.trim();
-            const smallImg = els.smallImg.value.trim();
-            const smallText = els.smallText.value.trim();
-            const showTimer = els.timer.checked;
-
-            let html = '<div class="discord-card-body">';
-
-            if (largeImg) {
-                html += '<div class="dc-images">';
-                html += `<img class="dc-large-img img-tooltip" src="${escapeHtml(largeImg)}" data-tooltip="${escapeHtml(largeText)}" onerror="this.style.display='none'" alt="">`;
-                if (smallImg) {
-                    html += `<img class="dc-small-img img-tooltip" src="${escapeHtml(smallImg)}" data-tooltip="${escapeHtml(smallText)}" onerror="this.style.display='none'" alt="">`;
-                }
-                html += '</div>';
-            }
-
-            html += '<div class="dc-info">';
-            html += `<div class="dc-app-name">Custom Status</div>`;
-            html += `<div class="dc-details">${escapeHtml(details)}</div>`;
-            if (state) html += `<div class="dc-state">${escapeHtml(state)}</div>`;
-            if (showTimer && startTime) {
-                const elapsed = formatElapsed(Date.now() - startTime);
-                html += `<div class="dc-time">${elapsed} elapsed</div>`;
-            }
-            html += '</div></div>';
-
-            els.preview.innerHTML = html;
-        }
-
-        function escapeHtml(str) {
-            const d = document.createElement("div");
-            d.textContent = str;
-            return d.innerHTML;
-        }
-
-        function formatElapsed(ms) {
-            const totalSec = Math.floor(ms / 1000);
-            const h = Math.floor(totalSec / 3600);
-            const m = Math.floor((totalSec % 3600) / 60);
-            const s = totalSec % 60;
-            if (h > 0) return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-            return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-        }
-
-        const allInputs = document.querySelectorAll("input");
-        allInputs.forEach(inp => {
-            inp.addEventListener("input", () => { if (active) { sendRPC(); updatePreview(); } });
-            inp.addEventListener("change", () => { if (active) { sendRPC(); updatePreview(); } });
-        });
-
-        setInterval(() => { if (active) updatePreview(); }, 1000);
-    </script>
+    <!-- Application Logic -->
+    <script src="app.js"></script>
 </body>
 
 </html>

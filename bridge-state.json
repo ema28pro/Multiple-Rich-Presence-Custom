@@ -1,4 +1,14 @@
-{
-  "robloxMonitorEnabled": false,
-  "custom": {"active": false}
-}
+{"custom": {
+  "rpc": {
+    "timestamps": {
+      "start": 1788687905,
+      "end": 1788688115
+    },
+    "details": "Listening Test Standalone",
+    "state": "Rock Artist",
+    "type": 2,
+    "activityType": "listening"
+  },
+  "active": true,
+  "priority": 4
+}}

@@ -6,5 +6,6 @@
   "wplaceClientId": "1480394033112023171",
   "animeClientId": "1480393899473371177",
   "wsPort": 6680,
-  "sourceTimeout": 15000
+  "sourceTimeout": 15000,
+  "logFile": "logs/dps.log"
 }

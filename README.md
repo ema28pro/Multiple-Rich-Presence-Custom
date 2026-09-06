@@ -39,15 +39,25 @@ No necesitas usar todas las funciones. Instala solo los userscripts que quieras.
 
 ## Instalación
 
-1. **[Descarga el ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (rama `release` — solo los archivos necesarios)
-2. Extrae el ZIP en una carpeta cualquiera
-3. Listo — ya puedes ejecutar `DiscordPipeSocket.jar`
+Puedes elegir entre dos versiones segun lo que necesites:
 
-El ZIP contiene:
-- `DiscordPipeSocket.jar` — el bridge
-- `config.json` — configuración
-- `custom-status/` — panel de estado personalizado
-- `userscripts/` — scripts de Tampermonkey
+### Opcion A: Version Completa (Multi-Source)
+Incluye soporte para TETR.IO, YouTube, Roblox, Anime, Wplace y Custom Status.
+1. **[Descarga el ZIP Completo](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (rama `release`)
+2. Extrae el ZIP en una carpeta cualquiera y ejecuta `DiscordPipeSocket.jar`.
+
+### Opcion B: Version Custom Status (Standalone Ligera)
+Dedicada exclusivamente a estados personalizados, sin scripts de Tampermonkey ni monitor de Roblox.
+1. Ejecuta `DiscordCustomRPC.jar` (o genera `Custom-Status-Release.zip` con `package-custom.bat`).
+2. Consulta la guia **[INICIO-RAPIDO-CUSTOM.md](INICIO-RAPIDO-CUSTOM.md)** para configurarlo en 2 pasos.
+
+El paquete completo incluye:
+- `DiscordPipeSocket.jar` — bridge multi-fuente
+- `DiscordCustomRPC.jar` — bridge exclusivo para Custom Status
+- `config.json` — configuracion de Client IDs y puertos
+- `custom-status/` — panel web de estado personalizado
+- `userscripts/` — scripts para Tampermonkey
+- `package-custom.bat` — generador de paquete ligero independiente
 
 ## Requisitos
 
@@ -94,14 +104,15 @@ Haz clic derecho en el icono de la bandeja → **Custom Status**. Se abre un pan
 
 ## Configuración
 
-El archivo `config.json` viene preconfigurado y listo para usar. Solo necesitas cambiarlo si quieres personalizar el nombre de la app en Discord.
+El archivo `config.json` viene preconfigurado y listo para usar. Solo necesitas cambiarlo si quieres personalizar el nombre de la app en Discord o la ubicación de los archivos de registro (logs).
 
 ```json
 {
   "clientId": "1479761532412887040",
   "tetrioClientId": "688741895307788290",
   "wsPort": 6680,
-  "sourceTimeout": 15000
+  "sourceTimeout": 15000,
+  "logFile": "logs/dps.log"
 }
 ```
 
@@ -127,7 +138,7 @@ Si usas Firefox, ve a `about:config` y cambia `network.websocket.allowInsecureFr
 - **El custom status se activa solo**: Cierra las pestañas viejas del panel de custom status en tu navegador.
 - **Anime-RPC no funciona en AnimeFLV**: Desactiva el adblocker para que el script pueda conectarse.
 - **Errores al cambiar entre userscripts**: Si el estado no se actualiza, recarga la página.
-- **Logs**: Ejecuta `logs.jar` para ver los logs del bridge en tiempo real. Puede ayudar a identificar problemas.
+- **Logs y depuración**: El programa de Java ahora guarda automáticamente un registro de todo lo que sucede. Por defecto se crea en `logs/dps.log` junto al archivo `.jar` y puedes abrirlo con cualquier editor de texto para investigar qué falló.
 - **El RPC se desactiva al cambiar de ventana**: Si solo estas usando un userscript puedes quitar el `if (document.hidden) return;` en el `setInterval()` en elscript para que siga funcionando al cambiar de ventana y al estar inactivo.
 
 ## Créditos
