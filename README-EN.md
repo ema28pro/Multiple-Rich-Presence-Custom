@@ -35,15 +35,25 @@ You don't need to use all features. Just install the userscripts you want.
 
 ## Installation
 
-1. **[Download the ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (`release` branch — only the necessary files)
-2. Extract the ZIP to any folder
-3. Done — you can now run `DiscordPipeSocket.jar`
+You can choose between two versions depending on your needs:
 
-The ZIP contains:
-- `DiscordPipeSocket.jar` — the bridge
-- `config.json` — configuration
-- `custom-status/` — custom status panel
+### Option A: Complete Multi-Source Version
+Includes support for TETR.IO, YouTube, Roblox, Anime, Wplace, and Custom Status.
+1. **[Download Complete ZIP](https://github.com/ema28pro/Multiple-Rich-Presence-Custom/archive/refs/heads/release.zip)** (`release` branch)
+2. Extract the ZIP into any folder and run `DiscordPipeSocket.jar`.
+
+### Option B: Custom Status Version (Lightweight Standalone)
+Dedicated exclusively to custom statuses, without Tampermonkey scripts or Roblox monitor.
+1. Run `DiscordCustomRPC.jar` (or generate `Custom-Status-Release.zip` with `package-custom.bat`).
+2. Check **[INICIO-RAPIDO-CUSTOM.md](INICIO-RAPIDO-CUSTOM.md)** for 2-step setup.
+
+The full release package includes:
+- `DiscordPipeSocket.jar` — multi-source bridge
+- `DiscordCustomRPC.jar` — dedicated bridge for Custom Status
+- `config.json` — Client ID and port configuration
+- `custom-status/` — custom status web panel
 - `userscripts/` — Tampermonkey scripts
+- `package-custom.bat` — standalone release packager
 
 ## Requirements
 

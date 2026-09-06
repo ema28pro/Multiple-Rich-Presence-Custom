@@ -52,6 +52,14 @@ public class DiscordPipeSocket {
             port = config.wsPort;
         }
 
+        // Check if port is already in use (prevent multiple instances)
+        try (java.net.ServerSocket ss = new java.net.ServerSocket(port)) {
+            // port is free
+        } catch (Exception e) {
+            logger.severe("[Bridge] Port " + port + " is already in use! Another instance is running. Exiting.");
+            System.exit(1);
+        }
+
         // Initialize SourceManager
         sourceManager = new SourceManager(config.sourceTimeout);
 
@@ -140,6 +148,18 @@ public class DiscordPipeSocket {
                         } else {
                             response.put("active", false);
                         }
+
+                        // Provide all configured Client IDs so the web client dropdown can list them
+                        JSONObject configIds = new JSONObject();
+                        if (config.clientId != null && !config.clientId.isEmpty()) configIds.put("Default / General", config.clientId);
+                        if (config.tetrioClientId != null && !config.tetrioClientId.isEmpty()) configIds.put("TETR.IO", config.tetrioClientId);
+                        if (config.robloxClientId != null && !config.robloxClientId.isEmpty()) configIds.put("Roblox", config.robloxClientId);
+                        if (config.youtubeClientId != null && !config.youtubeClientId.isEmpty()) configIds.put("YouTube", config.youtubeClientId);
+                        if (config.wplaceClientId != null && !config.wplaceClientId.isEmpty()) configIds.put("WPlace", config.wplaceClientId);
+                        if (config.animeClientId != null && !config.animeClientId.isEmpty()) configIds.put("Anime", config.animeClientId);
+                        response.put("configClientIds", configIds);
+                        response.put("currentClientId", DiscordIPC.getCurrentClientId());
+
                         conn.send(response.toString());
                         return;
                     }
@@ -154,6 +174,12 @@ public class DiscordPipeSocket {
                             sourceManager.removeSource(source);
                             SourceManager.UpdateResult result = sourceManager.checkForChanges();
                             applyPresenceUpdate(result, config, lib, handlers);
+                            return;
+                        }
+
+                        // When Custom Status is active, ignore incoming messages from other sources
+                        if (!"custom".equals(source) && sourceManager.getSource("custom") != null) {
+                            logger.info("[Bridge] Custom Status is active — ignoring outside source: " + source);
                             return;
                         }
 
@@ -178,11 +204,22 @@ public class DiscordPipeSocket {
                         }
 
                         SourceManager.UpdateResult result = sourceManager.checkForChanges();
-                        applyPresenceUpdate(result, config, lib, handlers);
+                        boolean ok = applyPresenceUpdate(result, config, lib, handlers);
+                        try {
+                            JSONObject statusResp = new JSONObject();
+                            statusResp.put("type", "presenceUpdateResult");
+                            statusResp.put("success", ok);
+                            statusResp.put("clientId", DiscordIPC.getCurrentClientId());
+                            conn.send(statusResp.toString());
+                        } catch (Exception ignored) { }
                         return;
                     }
 
                     // Legacy protocol: {cid, rpc}
+                    if (sourceManager.getSource("custom") != null) {
+                        logger.info("[Bridge] Custom Status is active — ignoring legacy outside message");
+                        return;
+                    }
                     String cid = jsonObject.getString("cid");
                     JSONObject rpcObj = jsonObject.getJSONObject("rpc");
                     if (DiscordIPC.isConnected() || DiscordIPC.connect(cid)) {
@@ -222,16 +259,48 @@ public class DiscordPipeSocket {
             }
         };
 
+        final TrayIcon[] trayRef = new TrayIcon[1];
+
         PopupMenu popMenu = new PopupMenu();
         MenuItem item1 = new MenuItem("Port: " + port);
         item1.setEnabled(false);
         MenuItem item2 = new MenuItem("Exit");
         item2.addActionListener((ex) -> {
-            saveBridgeState(sourceManager, robloxMonitor);
-            scheduler.shutdown();
-            DiscordIPC.disconnect();
-            lib.Discord_Shutdown();
-            System.exit(0);
+            // Immediately remove tray icon so UI feels instant
+            try {
+                if (trayRef[0] != null && SystemTray.isSupported()) {
+                    SystemTray.getSystemTray().remove(trayRef[0]);
+                }
+            } catch (Throwable ignored) { }
+
+            // Launch fallback force-exit timer in 800ms
+            Thread forceHalt = new Thread(() -> {
+                try {
+                    Thread.sleep(800);
+                } catch (InterruptedException ignored) { }
+                Runtime.getRuntime().halt(0);
+            }, "Force-Halt");
+            forceHalt.setDaemon(true);
+            forceHalt.start();
+
+            // Run graceful cleanup in background thread
+            new Thread(() -> {
+                try {
+                    saveBridgeState(sourceManager, robloxMonitor);
+                } catch (Throwable ignored) { }
+                try {
+                    scheduler.shutdownNow();
+                } catch (Throwable ignored) { }
+                try {
+                    DiscordIPC.disconnect();
+                } catch (Throwable ignored) { }
+                try {
+                    if (!currentClientId.isEmpty()) {
+                        lib.Discord_Shutdown();
+                    }
+                } catch (Throwable ignored) { }
+                System.exit(0);
+            }, "Exit-Cleanup").start();
         });
         MenuItem item3 = new MenuItem("Custom Status");
         item3.addActionListener((ex) -> {
@@ -275,6 +344,7 @@ public class DiscordPipeSocket {
                 TrayIcon trayIcon = new TrayIcon(img.getScaledInstance(trayiconw, -1, 4), "Discord Pipe Socket",
                         popMenu);
                 SystemTray.getSystemTray().add(trayIcon);
+                trayRef[0] = trayIcon;
             } catch (Exception e) {
                 logger.severe("[Bridge] Could not initialize System Tray: " + e.getMessage());
             }
@@ -282,6 +352,15 @@ public class DiscordPipeSocket {
             logger.info(
                     "[Bridge] System Tray is not supported on this OS/Desktop environment. Running without tray icon.");
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (trayRef[0] != null && SystemTray.isSupported()) {
+                    SystemTray.getSystemTray().remove(trayRef[0]);
+                }
+            } catch (Throwable ignored) { }
+        }));
+
         server.run();
     }
 
@@ -380,11 +459,19 @@ public class DiscordPipeSocket {
         return null;
     }
 
-    static void applyPresenceUpdate(SourceManager.UpdateResult result, Config config, DiscordRPC lib, DiscordEventHandlers handlers) {
-        if (!result.changed) return;
+    static boolean applyPresenceUpdate(SourceManager.UpdateResult result, Config config, DiscordRPC lib, DiscordEventHandlers handlers) {
+        if (!result.changed) return true;
 
         if (result.activeSource != null) {
-            DiscordIPC.ensureClientId(result.activeSource, config);
+            String customCid = null;
+            if (result.rpcData != null) {
+                customCid = result.rpcData.optString("clientId", result.rpcData.optString("client_id", "")).trim();
+            }
+            if (customCid != null && !customCid.isEmpty()) {
+                DiscordIPC.ensureClientId(result.activeSource, customCid);
+            } else {
+                DiscordIPC.ensureClientId(result.activeSource, config);
+            }
             if (!DiscordIPC.isConnected()) {
                 ensureClientId(lib, handlers, result.activeSource, config);
             }
@@ -393,19 +480,21 @@ public class DiscordPipeSocket {
         if (DiscordIPC.isConnected()) {
             if (result.rpcData != null) {
                 logger.info("[Bridge] Updating presence via DiscordIPC -> " + result.activeSource);
-                DiscordIPC.updatePresence(result.rpcData);
+                return DiscordIPC.updatePresence(result.rpcData);
             } else {
                 logger.info("[Bridge] Clearing presence via DiscordIPC (all sources expired/removed)");
-                DiscordIPC.clearPresence();
+                return DiscordIPC.clearPresence();
             }
         } else {
             lib.Discord_RunCallbacks();
             if (result.presence != null) {
                 logger.info("[Bridge] Updating presence via Minnced fallback -> " + result.activeSource);
                 lib.Discord_UpdatePresence(result.presence);
+                return true;
             } else {
                 logger.info("[Bridge] Clearing presence via Minnced fallback (all sources expired)");
                 lib.Discord_ClearPresence();
+                return true;
             }
         }
     }

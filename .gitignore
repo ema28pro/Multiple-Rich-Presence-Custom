@@ -7,6 +7,9 @@ logs/
 # Backups y builds temporales
 DiscordPipeSocket-original.jar
 DiscordPipeSocket-linux.jar
+DiscordCustomRPC-linux.jar
+dist-custom/
+Custom-Status-Release.zip
 build/
 *.class
 

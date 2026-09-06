@@ -51,6 +51,11 @@ public class RobloxMonitor implements Runnable {
                 return;
             }
 
+            if (sourceManager.getSource("custom") != null) {
+                // Custom status is active — do not overwrite with Roblox
+                return;
+            }
+
             if (!isRobloxRunning()) {
                 if (wasRunning) {
                     logger.info("[RobloxMonitor] Roblox not running, clearing source");

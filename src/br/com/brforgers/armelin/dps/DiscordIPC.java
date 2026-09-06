@@ -25,7 +25,6 @@ public class DiscordIPC {
     private static RandomAccessFile pipe = null;
     private static volatile boolean connected = false;
     private static String currentClientId = "";
-    private static Thread readerThread = null;
     private static final int processId = getProcessId();
 
     private static final int OP_HANDSHAKE = 0;
@@ -74,19 +73,26 @@ public class DiscordIPC {
     }
 
     /**
-     * Ensures Discord IPC is connected with the appropriate client ID for the active source.
+     * Ensures Discord IPC is connected with the specified client ID.
      */
-    public static synchronized void ensureClientId(String source, Config config) {
-        String requiredId = resolveClientId(source, config);
-        if (requiredId.isEmpty()) {
+    public static synchronized void ensureClientId(String source, String requiredId) {
+        if (requiredId == null || requiredId.trim().isEmpty()) {
             return;
         }
+        requiredId = requiredId.trim();
         if (requiredId.equals(currentClientId) && isConnected()) {
             return;
         }
         logger.info("[DiscordIPC] Switching client ID for source '" + source + "' -> " + requiredId);
         disconnect();
         connect(requiredId);
+    }
+
+    /**
+     * Ensures Discord IPC is connected with the appropriate client ID for the active source.
+     */
+    public static synchronized void ensureClientId(String source, Config config) {
+        ensureClientId(source, resolveClientId(source, config));
     }
 
     /**
@@ -115,18 +121,22 @@ public class DiscordIPC {
                 handshake.put("v", 1);
                 handshake.put("client_id", clientId);
 
-                sendPacket(OP_HANDSHAKE, handshake.toString());
+                JSONObject resp = sendAndReceive(OP_HANDSHAKE, handshake.toString());
+                if (resp != null && "DISPATCH".equals(resp.optString("cmd")) && "READY".equals(resp.optString("evt"))) {
+                    JSONObject user = resp.optJSONObject("data") != null ? resp.getJSONObject("data").optJSONObject("user") : null;
+                    if (user != null) {
+                        logger.info("[DiscordIPC] Handshake OK. Welcome " + user.optString("username", "user") + ".");
+                    }
+                }
+
                 connected = true;
-
-                // Start reader thread to drain responses and detect closure
-                readerThread = new Thread(() -> readLoop(raf), "DiscordIPC-Reader");
-                readerThread.setDaemon(true);
-                readerThread.start();
-
                 logger.info("[DiscordIPC] Connected to pipe discord-ipc-" + i + " with clientId=" + clientId);
                 return true;
             } catch (Exception e) {
-                // Pipe not available, continue scanning
+                if (pipe != null) {
+                    try { pipe.close(); } catch (Exception ignored) { }
+                    pipe = null;
+                }
             }
         }
 
@@ -136,58 +146,9 @@ public class DiscordIPC {
     }
 
     /**
-     * Background thread reading responses from the pipe.
+     * Sends a raw packet and synchronously reads the response from Discord.
      */
-    private static void readLoop(RandomAccessFile raf) {
-        byte[] header = new byte[8];
-        try {
-            while (!Thread.currentThread().isInterrupted()) {
-                raf.readFully(header);
-                int opcode = (header[0] & 0xFF) | ((header[1] & 0xFF) << 8) | ((header[2] & 0xFF) << 16) | ((header[3] & 0xFF) << 24);
-                int length = (header[4] & 0xFF) | ((header[5] & 0xFF) << 8) | ((header[6] & 0xFF) << 16) | ((header[7] & 0xFF) << 24);
-
-                if (length > 0) {
-                    byte[] body = new byte[length];
-                    raf.readFully(body);
-                    String json = new String(body, StandardCharsets.UTF_8);
-
-                    if (opcode == OP_FRAME) {
-                        try {
-                            JSONObject obj = new JSONObject(json);
-                            if ("DISPATCH".equals(obj.optString("cmd")) && "READY".equals(obj.optString("evt"))) {
-                                JSONObject user = obj.optJSONObject("data") != null ? obj.getJSONObject("data").optJSONObject("user") : null;
-                                if (user != null) {
-                                    logger.info("[DiscordIPC] Handshake OK. Welcome " + user.optString("username", "user") + ".");
-                                }
-                            } else if ("ERROR".equals(obj.optString("evt"))) {
-                                logger.severe("[DiscordIPC] Error from Discord: " + obj.optString("data"));
-                            }
-                        } catch (Exception ignored) { }
-                    } else if (opcode == OP_PING) {
-                        sendPacket(OP_PONG, json);
-                    } else if (opcode == OP_CLOSE) {
-                        logger.info("[DiscordIPC] Received close from Discord: " + json);
-                        break;
-                    }
-                }
-            }
-        } catch (Exception e) {
-            // Pipe disconnected or closed
-        } finally {
-            synchronized (DiscordIPC.class) {
-                if (pipe == raf) {
-                    connected = false;
-                    try { raf.close(); } catch (Exception ignored) { }
-                    pipe = null;
-                }
-            }
-        }
-    }
-
-    /**
-     * Sends a raw opcode + length + json packet to the pipe.
-     */
-    private static synchronized void sendPacket(int opcode, String json) throws IOException {
+    private static synchronized JSONObject sendAndReceive(int opcode, String json) throws IOException {
         if (pipe == null) {
             throw new IOException("Discord IPC pipe not connected");
         }
@@ -207,6 +168,21 @@ public class DiscordIPC {
 
         pipe.write(header);
         pipe.write(data);
+
+        // Read response header
+        byte[] respHeader = new byte[8];
+        pipe.readFully(respHeader);
+        int respLen = (respHeader[4] & 0xFF) | ((respHeader[5] & 0xFF) << 8) | ((respHeader[6] & 0xFF) << 16) | ((respHeader[7] & 0xFF) << 24);
+
+        if (respLen > 0) {
+            byte[] body = new byte[respLen];
+            pipe.readFully(body);
+            String respJson = new String(body, StandardCharsets.UTF_8);
+            try {
+                return new JSONObject(respJson);
+            } catch (Exception ignored) { }
+        }
+        return null;
     }
 
     /**
@@ -215,6 +191,14 @@ public class DiscordIPC {
     public static synchronized boolean updatePresence(JSONObject rpc) {
         if (rpc == null) {
             return clearPresence();
+        }
+
+        // Ensure custom clientId if specified in rpc
+        String customCid = rpc.optString("clientId", rpc.optString("client_id", "")).trim();
+        if (!customCid.isEmpty()) {
+            if (!customCid.equals(currentClientId) || !isConnected()) {
+                ensureClientId("custom", customCid);
+            }
         }
 
         if (!isConnected()) {
@@ -229,17 +213,32 @@ public class DiscordIPC {
         try {
             JSONObject activity = new JSONObject();
 
-            // 1. Details & State
+            // 1. Details & State with optional URLs
             if (rpc.has("details") && !rpc.isNull("details")) {
                 String d = rpc.getString("details").trim();
                 if (!d.isEmpty()) activity.put("details", truncate(d, 128));
+            }
+            if (rpc.has("details_url") && !rpc.isNull("details_url")) {
+                String u = rpc.getString("details_url").trim();
+                if (!u.isEmpty()) activity.put("details_url", u);
             }
             if (rpc.has("state") && !rpc.isNull("state")) {
                 String s = rpc.getString("state").trim();
                 if (!s.isEmpty()) activity.put("state", truncate(s, 128));
             }
+            if (rpc.has("state_url") && !rpc.isNull("state_url")) {
+                String u = rpc.getString("state_url").trim();
+                if (!u.isEmpty()) activity.put("state_url", u);
+            }
+
+            // Name override
+            if (rpc.has("name") && !rpc.isNull("name")) {
+                String n = rpc.getString("name").trim();
+                if (!n.isEmpty()) activity.put("name", n);
+            }
 
             // 2. Activity Type (0 = Playing, 2 = Listening, 3 = Watching, 5 = Competing)
+            // Note: Discord Desktop local RPC strictly rejects type 1 (Streaming) with error 4000: ["type" must be one of [0, 2, 3, 5]]
             int type = 0;
             if (rpc.has("type") && !rpc.isNull("type")) {
                 type = rpc.getInt("type");
@@ -249,59 +248,111 @@ public class DiscordIPC {
                 else if ("watching".equals(at)) type = 3;
                 else if ("competing".equals(at)) type = 5;
                 else type = 0;
+            } else if (rpc.has("activity_type") && !rpc.isNull("activity_type")) {
+                type = rpc.getInt("activity_type");
+            }
+
+            if (type != 0 && type != 2 && type != 3 && type != 5) {
+                logger.warning("[DiscordIPC] Activity type " + type + " is not supported by Discord local RPC (allowed: [0, 2, 3, 5]). Falling back to 0 (Playing).");
+                type = 0;
             }
             activity.put("type", type);
+
+            // Stream URL (Discord requires a valid stream URL like Twitch/YouTube when activity_type is 1 / Streaming)
+            if (rpc.has("url") && !rpc.isNull("url")) {
+                String u = rpc.getString("url").trim();
+                if (!u.isEmpty()) activity.put("url", u);
+            } else if (rpc.has("stream_url") && !rpc.isNull("stream_url")) {
+                String u = rpc.getString("stream_url").trim();
+                if (!u.isEmpty()) activity.put("url", u);
+            }
+
+            // Status Display Type (0 = Name, 1 = State, 2 = Details)
+            if (rpc.has("status_display_type") && !rpc.isNull("status_display_type")) {
+                activity.put("status_display_type", rpc.getInt("status_display_type"));
+            }
 
             // 3. Timestamps (seconds)
             JSONObject timestamps = new JSONObject();
             if (rpc.has("startTimestamp") && !rpc.isNull("startTimestamp")) {
                 long start = parseTimestamp(rpc.get("startTimestamp"));
                 if (start > 0) timestamps.put("start", start);
+            } else if (rpc.has("start") && !rpc.isNull("start")) {
+                long start = parseTimestamp(rpc.get("start"));
+                if (start > 0) timestamps.put("start", start);
             }
             if (rpc.has("endTimestamp") && !rpc.isNull("endTimestamp")) {
                 long end = parseTimestamp(rpc.get("endTimestamp"));
+                if (end > 0) timestamps.put("end", end);
+            } else if (rpc.has("end") && !rpc.isNull("end")) {
+                long end = parseTimestamp(rpc.get("end"));
                 if (end > 0) timestamps.put("end", end);
             }
             if (timestamps.length() > 0) {
                 activity.put("timestamps", timestamps);
             }
 
-            // 4. Assets (large_image, large_text, small_image, small_text)
+            // 4. Assets (large_image, large_text, large_url, small_image, small_text, small_url)
             JSONObject assets = new JSONObject();
-            if (rpc.has("largeImageKey") && !rpc.isNull("largeImageKey")) {
-                String k = rpc.getString("largeImageKey").trim();
-                if (!k.isEmpty()) assets.put("large_image", k);
-            }
-            if (rpc.has("largeImageText") && !rpc.isNull("largeImageText")) {
-                String t = rpc.getString("largeImageText").trim();
-                if (!t.isEmpty()) assets.put("large_text", truncate(t, 128));
-            }
-            if (rpc.has("smallImageKey") && !rpc.isNull("smallImageKey")) {
-                String k = rpc.getString("smallImageKey").trim();
-                if (!k.isEmpty()) assets.put("small_image", k);
-            }
-            if (rpc.has("smallImageText") && !rpc.isNull("smallImageText")) {
-                String t = rpc.getString("smallImageText").trim();
-                if (!t.isEmpty()) assets.put("small_text", truncate(t, 128));
-            }
+            String largeKey = rpc.optString("largeImageKey", rpc.optString("large_image", "")).trim();
+            String largeText = rpc.optString("largeImageText", rpc.optString("large_text", "")).trim();
+            String largeUrl = rpc.optString("large_url", "").trim();
+            String smallKey = rpc.optString("smallImageKey", rpc.optString("small_image", "")).trim();
+            String smallText = rpc.optString("smallImageText", rpc.optString("small_text", "")).trim();
+            String smallUrl = rpc.optString("small_url", "").trim();
+
+            if (!largeKey.isEmpty()) assets.put("large_image", largeKey);
+            if (!largeText.isEmpty()) assets.put("large_text", truncate(largeText, 128));
+            if (!largeUrl.isEmpty()) assets.put("large_url", largeUrl);
+            if (!smallKey.isEmpty()) assets.put("small_image", smallKey);
+            if (!smallText.isEmpty()) assets.put("small_text", truncate(smallText, 128));
+            if (!smallUrl.isEmpty()) assets.put("small_url", smallUrl);
             if (assets.length() > 0) {
                 activity.put("assets", assets);
             }
 
-            // 5. Party
-            if (rpc.has("partyId") && !rpc.isNull("partyId")) {
+            // 5. Party (id, size [cur, max])
+            String pid = rpc.optString("partyId", rpc.optString("party_id", "")).trim();
+            if (!pid.isEmpty() || rpc.has("partySize") || rpc.has("party_size")) {
                 JSONObject party = new JSONObject();
-                party.put("id", rpc.getString("partyId"));
+                if (!pid.isEmpty()) party.put("id", pid);
                 if (rpc.has("partySize") && rpc.has("partyMax") && !rpc.isNull("partySize") && !rpc.isNull("partyMax")) {
                     JSONArray sizeArr = new JSONArray();
                     sizeArr.put(rpc.getInt("partySize"));
                     sizeArr.put(rpc.getInt("partyMax"));
                     party.put("size", sizeArr);
+                } else if (rpc.has("party_size") && !rpc.isNull("party_size")) {
+                    party.put("size", rpc.getJSONArray("party_size"));
                 }
-                activity.put("party", party);
+                if (party.length() > 0) {
+                    activity.put("party", party);
+                }
             }
 
-            // 6. Buttons (up to 2 buttons with label & url)
+            // 6. Secrets (join, spectate, match)
+            JSONObject secrets = new JSONObject();
+            if (rpc.has("join") && !rpc.isNull("join")) {
+                String j = rpc.getString("join").trim();
+                if (!j.isEmpty()) secrets.put("join", j);
+            }
+            if (rpc.has("spectate") && !rpc.isNull("spectate")) {
+                String s = rpc.getString("spectate").trim();
+                if (!s.isEmpty()) secrets.put("spectate", s);
+            }
+            if (rpc.has("match") && !rpc.isNull("match")) {
+                String m = rpc.getString("match").trim();
+                if (!m.isEmpty()) secrets.put("match", m);
+            }
+            if (secrets.length() > 0) {
+                activity.put("secrets", secrets);
+            }
+
+            // 7. Instance
+            if (rpc.has("instance") && !rpc.isNull("instance")) {
+                activity.put("instance", rpc.getBoolean("instance"));
+            }
+
+            // 8. Buttons (up to 2 buttons with label & url)
             if (rpc.has("buttons") && !rpc.isNull("buttons")) {
                 JSONArray rawButtons = rpc.getJSONArray("buttons");
                 JSONArray buttons = new JSONArray();
@@ -310,6 +361,9 @@ public class DiscordIPC {
                     String label = b.optString("label", "").trim();
                     String url = b.optString("url", "").trim();
                     if (!label.isEmpty() && !url.isEmpty()) {
+                        if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                            url = "https://" + url;
+                        }
                         JSONObject btnObj = new JSONObject();
                         btnObj.put("label", truncate(label, 32));
                         btnObj.put("url", truncate(url, 512));
@@ -318,19 +372,44 @@ public class DiscordIPC {
                 }
                 if (buttons.length() > 0) {
                     activity.put("buttons", buttons);
+                    if (activity.has("secrets")) {
+                        logger.warning("[DiscordIPC] Discord Error 5005 prevention: secrets cannot be sent with buttons. Omitting secrets.");
+                        activity.remove("secrets");
+                    }
                 }
+            }
+
+            // 9. Payload Override (allows injecting or overriding any arbitrary fields into activity)
+            if (rpc.has("payload_override") && !rpc.isNull("payload_override")) {
+                JSONObject override = rpc.getJSONObject("payload_override");
+                for (String key : override.keySet()) {
+                    activity.put(key, override.get(key));
+                }
+            }
+
+            // Custom PID if provided
+            int targetPid = processId;
+            if (rpc.has("pid") && !rpc.isNull("pid")) {
+                targetPid = rpc.getInt("pid");
             }
 
             // Frame payload
             JSONObject frame = new JSONObject();
             frame.put("cmd", "SET_ACTIVITY");
             JSONObject args = new JSONObject();
-            args.put("pid", processId);
+            args.put("pid", targetPid);
             args.put("activity", activity);
             frame.put("args", args);
             frame.put("nonce", UUID.randomUUID().toString());
 
-            sendPacket(OP_FRAME, frame.toString());
+            JSONObject resp = sendAndReceive(OP_FRAME, frame.toString());
+            if (resp != null) {
+                if ("ERROR".equals(resp.optString("evt"))) {
+                    logger.severe("[DiscordIPC] Error from Discord: " + resp.opt("data"));
+                } else {
+                    logger.info("[DiscordIPC] Presence updated successfully on Discord.");
+                }
+            }
             return true;
         } catch (Exception e) {
             logger.severe("[DiscordIPC] Error sending presence: " + e.getMessage());
@@ -355,7 +434,7 @@ public class DiscordIPC {
             frame.put("args", args);
             frame.put("nonce", UUID.randomUUID().toString());
 
-            sendPacket(OP_FRAME, frame.toString());
+            sendAndReceive(OP_FRAME, frame.toString());
             return true;
         } catch (Exception e) {
             logger.severe("[DiscordIPC] Error clearing presence: " + e.getMessage());
@@ -368,10 +447,6 @@ public class DiscordIPC {
      */
     public static synchronized void disconnect() {
         connected = false;
-        if (readerThread != null) {
-            readerThread.interrupt();
-            readerThread = null;
-        }
         if (pipe != null) {
             try {
                 pipe.close();
